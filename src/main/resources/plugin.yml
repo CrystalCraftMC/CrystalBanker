@@ -12,6 +12,6 @@ commands:
     permission: crystalbanker-transaction
 
 permissions:
-  crystalbanker-transaction:
+  crystalbanker.transaction:
     description: Exchange dealing with XP and XP bottles.
     default: true

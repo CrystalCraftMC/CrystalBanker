@@ -38,8 +38,10 @@ import java.io.File;
 import java.util.Random;
 
 public class CrystalBanker extends JavaPlugin {
+
     public void onEnable() {
         getLogger().info(ChatColor.GRAY + "CrystalBanker has been initialized!");
+        
         try {
             File database = new File(getDataFolder(), "config.yml");
             if (!database.exists()) saveDefaultConfig();
@@ -47,19 +49,26 @@ public class CrystalBanker extends JavaPlugin {
             e1.printStackTrace();
         }
     }
+    
     public void onDisable() {
         getLogger().info(ChatColor.GRAY + "CrystalBanker has been stopped by the server.");
     }
-    //Command method to do - check permissions,
+    
+    //TODO Command method - check permissions
+    
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (isPlayer(sender)){
+        
+        if (isPlayer(sender)) {
             Player player = (Player) sender;
-            if(player.hasPermission("crystalbanker-transaction")){
+            
+            if (player.hasPermission("crystalbanker.transaction")) {
                 Inventory inv = player.getInventory();
-                if(cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[1].equalsIgnoreCase("deposit") && isInt(args[2])){
+                
+                if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[1].equalsIgnoreCase("deposit") && isInt(args[2])) {
                     Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker deposit");
-                    if(countXP(player)){
+                    
+                    if (countXP(player)) {
                         int storeLevels = Integer.parseInt(args[2].trim());
                         int currentLevel = player.getLevel();
                         int clXP = player.getTotalExperience();
@@ -70,28 +79,32 @@ public class CrystalBanker extends JavaPlugin {
                         return true;
                     } else return false;
                 }
-                else if(cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[1].equalsIgnoreCase("withdraw") && isInt(args[2])) {//the int represents the bottle amount to be used
+                
+                else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[1].equalsIgnoreCase("withdraw") && isInt(args[2])) {//the int represents the bottle amount to be used
                     Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker withdraw # fired");
                     int amountToRemove = Integer.parseInt(args[2]);
-                    if(countBottles(player, inv, amountToRemove) >= amountToRemove) {
+                    if (countBottles(player, inv, amountToRemove) >= amountToRemove) {
                         bottlesToXP(amountToRemove, player, inv);
                         return true;
                     }
                     else return false;
                 }
+                
                 else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
-                    if(player.isOp()){
+                    if (player.isOp()) {
                         this.reloadConfig();
                         player.sendMessage(ChatColor.GRAY + "Configuration reloaded!");
                         return true;
                     }
                     return false;
                 }
+                
                 else getLogger().info(ChatColor.RED + "Plugin failed to recongize commands.");
             }//has permission
         }//isPlayer Ends
         return false;
     }//command method ends
+    
     //this cause mayhem and destruction to everyone... no, no, not the method, what the method represents, if return true;
     public boolean isPlayer(CommandSender sender) {
         if(!(sender instanceof Player)){
@@ -101,12 +114,14 @@ public class CrystalBanker extends JavaPlugin {
             return true;
         }
     }
+    
     //Determines how many orbs are in a bottle: the value is between 3 and 11, so that is what this method does. THIS METHOD SHOULD (ALMOST) ALWAYS be in a FOR loop
     public static float orbsPerBottle() {
         Random rand = new Random();
         float xpOrbs = (rand.nextFloat() * (11 - 3)) + 3; //leave this here for now, floats generate numbers been 0 and 1 but excluding 1 so it SLIGHTLY to the players disadvantaged
         return xpOrbs;
     }
+    
     //searches inv and counts to see how many xp bottles you have in your inventory (needed method)
     public static int countBottles(Player player, Inventory inv, int amountToRemove) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count bottles fired");
@@ -130,6 +145,7 @@ public class CrystalBanker extends JavaPlugin {
         }
         return 0;
     }
+    
     //makes sure that the 2nd argument of the /crystalbanker command is an integer
     public static boolean isInt(String bottlesToUse) {
         try {
@@ -141,6 +157,7 @@ public class CrystalBanker extends JavaPlugin {
         }
         return true;
     }
+    
     //changes bottles to xp which can be spent at the shops
     public static void bottlesToXP(int amountToRemove, Player player, Inventory inv){
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: bottlesToXP has been fired. Searching and removing numeric values.");
@@ -150,24 +167,25 @@ public class CrystalBanker extends JavaPlugin {
             ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
             if (!invSlot.getType().equals(xpBottle.getType()) || invSlot == null) continue;//ignore if not xp
             else if (invSlot.getType().equals(xpBottle.getType())) {//if xpBottles then...
-                if(leftToRemove <= 0){//if more to remove then...
-                    if(invSlot.getAmount() < leftToRemove){//if found
+                if (leftToRemove <= 0) {//if more to remove then...
+                    if (invSlot.getAmount() < leftToRemove) {//if found
                         leftToRemove -= invSlot.getAmount();
                         inv.clear(i);
-                    } else if (invSlot.getAmount() == leftToRemove){
+                    } else if (invSlot.getAmount() == leftToRemove) {
                         leftToRemove -= invSlot.getAmount();
                         inv.clear(i);
                         break;
-                    } else if (invSlot.getAmount() > leftToRemove){
+                    } else if (invSlot.getAmount() > leftToRemove) {
                         invSlot.setAmount((invSlot.getAmount() - leftToRemove));
                         break;
                     }
                 }
             }
         }
-//Add levels
+
+        //Add levels
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Preparing to translate numeric values into experience.");
-        if(leftToRemove == 0){
+        if (leftToRemove == 0) {
             int xpOrbTotal = 0;
             for (int i = 0; i < amountToRemove; i++){//translate everything into orbs
                 int xpOrb = Math.round(orbsPerBottle());
@@ -180,6 +198,7 @@ public class CrystalBanker extends JavaPlugin {
             Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Player xp from TotalOrbs: " + player.getTotalExperience());
         }
     }
+    
     //makes sure there are at least 7 levels on player, and that the change will not result in negative XP.
     public static boolean countXP(Player player){
         int currentXP = player.getTotalExperience();
@@ -191,9 +210,10 @@ public class CrystalBanker extends JavaPlugin {
             return false;
         }
     }
+    
     //stores a players xp into bottles
-//Eventually add code to check if there is room in player inventory for the bottles - maybe make it a method?
-//changes xp to bottles which can stored in chests until used
+    //Eventually add code to check if there is room in player inventory for the bottles - maybe make it a method?
+    //changes xp to bottles which can stored in chests until used
     public static void xpToBottles(Player player, int totalXPToChange){
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: XP to bottles fired.");
         int currentXP = player.getTotalExperience();
@@ -222,6 +242,7 @@ public class CrystalBanker extends JavaPlugin {
             return;
         }
     }
+    
     public static int inventorySpace(Player player, Inventory inv){
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count inventory space.");
         int tally = 0;
@@ -239,13 +260,15 @@ public class CrystalBanker extends JavaPlugin {
         }
         return tally;
     }
+    
     //these last three methods are the just formulas, and conversion rates of level to XP.
-//Tier One is the formula for leveling up for levels 1-16
+    //Tier One is the formula for leveling up for levels 1-16
     public int formulaTierOne(Player player, int useLevel, int currentLevel, int clXP, int xpTally){
         int targetLevel = currentLevel - useLevel;
         if (targetLevel >= 0) xpTally = clXP - (17 * (targetLevel));
         return xpTally; //Gives XP: Tier 1 Only
     }
+    
     //Tier Two is the formula for leveling up for levels 17-31
     public int forumlaTierTwo(Player player, int useLevel, int currentLevel, int clXP, int xpTally){
         if(useLevel <= currentLevel - 16){
@@ -269,6 +292,7 @@ public class CrystalBanker extends JavaPlugin {
         }//Gives XP: Tier 1 and 2
         return 0;
     }
+    
     //Tier Three is the formula for leveling up for levels 32+
     public static int forumlaTierThree(int useLevel, int currentLevel, int clXP, int xpTally){
         int targetLevel = currentLevel - useLevel;
