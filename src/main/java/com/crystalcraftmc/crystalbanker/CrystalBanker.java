@@ -69,14 +69,13 @@ public class CrystalBanker extends JavaPlugin {
             if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("deposit") && isInt(args[1])) {
                 Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker deposit");
 
-                    if(countXP(player)){ //No need to check amount of xp compared to the arg[2]... this is done inside the xpToBottles
-						int storeLevels = Integer.parseInt(args[1].trim());
-						int currentLevel = player.getLevel();
-						int clXP = player.getTotalExperience();
-						int xpTally = 0;
-						if(currentLevel <= 16){ 
-							xpToBottles(player, formulaTierOne(storeLevels, currentLevel, clXP, xpTally));
-							
+                if (countXP(player)) { //No need to check amount of xp compared to the arg[2]... this is done inside the xpToBottles
+                    int storeLevels = Integer.parseInt(args[1].trim());
+                    int currentLevel = player.getLevel();
+                    int clXP = player.getTotalExperience();
+                    int xpTally = 0;
+                    if (currentLevel <= 16) {
+                        xpToBottles(player, formulaTierOne(storeLevels, currentLevel, clXP, xpTally));
                         return true;
                     } else if (currentLevel <= 31) {
                         xpToBottles(player, forumlaTierTwo(storeLevels, currentLevel, clXP, xpTally));
@@ -141,9 +140,9 @@ public class CrystalBanker extends JavaPlugin {
     public static boolean isInt(String bottlesToUse) {
         try {
             Integer.parseInt(bottlesToUse.trim());
-            Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Your args[2] was: " + bottlesToUse);
+            Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Your args[1] was: " + bottlesToUse);
         } catch (NumberFormatException nFE) {
-            Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Your args[2] failed to convert to an int");
+            Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Your args[1] failed to convert to an int");
             return false;
         }
         return true;
