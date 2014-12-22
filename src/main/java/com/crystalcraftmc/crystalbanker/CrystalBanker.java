@@ -168,6 +168,7 @@ public class CrystalBanker extends JavaPlugin {
                         break;
                     } else if (invSlot.getAmount() > leftToRemove) {
                         invSlot.setAmount((invSlot.getAmount() - leftToRemove));
+                        leftToRemove = 0;
                         break;
                     }
                 }
