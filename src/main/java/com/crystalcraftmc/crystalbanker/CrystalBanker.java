@@ -56,38 +56,19 @@ public class CrystalBanker extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-<<<<<<< HEAD
         Player player = (Player) sender;
         Inventory inv = player.getInventory();
 
-        if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 1 && args[1].equalsIgnoreCase("reload")) {
+        if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             this.reloadConfig();
             player.sendMessage(ChatColor.GRAY + "Configuration reloaded!");
         }
 
         if (isPlayer(sender) && player.hasPermission("crystalbanker.transaction")) {
 
-            if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[1].equalsIgnoreCase("deposit") && isInt(args[2])) {
+            if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("deposit") && isInt(args[1])) {
                 Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker deposit");
 
-                if (countXP(player)) { //No need to check amount of xp compared to the arg[2]... this is done inside the xpToBottles
-                    int storeLevels = Integer.parseInt(args[2].trim());
-                    int currentLevel = player.getLevel();
-                    int clXP = player.getTotalExperience();
-                    int xpTally = 0;
-                    if (currentLevel <= 16) {
-                        xpToBottles(player, formulaTierOne(storeLevels, currentLevel, clXP, xpTally));
-=======
-        
-        if (isPlayer(sender)) {
-            Player player = (Player) sender;
-            
-            if (player.hasPermission("crystalbanker.transaction")) {
-                Inventory inv = player.getInventory();
-                
-                if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("deposit") && isInt(args[1])) {
-                    Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker deposit");
-                    
                     if(countXP(player)){ //No need to check amount of xp compared to the arg[2]... this is done inside the xpToBottles
 						int storeLevels = Integer.parseInt(args[1].trim());
 						int currentLevel = player.getLevel();
@@ -95,25 +76,7 @@ public class CrystalBanker extends JavaPlugin {
 						int xpTally = 0;
 						if(currentLevel <= 16){ 
 							xpToBottles(player, formulaTierOne(storeLevels, currentLevel, clXP, xpTally));
-							return true;	
-						}
-						else if (currentLevel <= 31){
-							xpToBottles(player, forumlaTierTwo(storeLevels, currentLevel, clXP, xpTally));
-							return true;
-						}
-						else if (currentLevel >= 32){
-							xpToBottles(player, forumlaTierThree(storeLevels, currentLevel, clXP, xpTally));
-							return true;
-						}
-					} else return false;
-                }
-                
-                else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("withdraw") && isInt(args[1])) {//the int represents the bottle amount to be used
-                    Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker withdraw # fired");
-                    int amountToRemove = Integer.parseInt(args[1]);
-                    if (countBottles(player, inv, amountToRemove) >= amountToRemove) {
-                        bottlesToXP(amountToRemove, player, inv);
->>>>>>> ded5c5658004fad3a8b3742af165a4b374059f3b
+							
                         return true;
                     } else if (currentLevel <= 31) {
                         xpToBottles(player, forumlaTierTwo(storeLevels, currentLevel, clXP, xpTally));
@@ -123,9 +86,9 @@ public class CrystalBanker extends JavaPlugin {
                         return true;
                     }
                 } else return false;
-            } else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[1].equalsIgnoreCase("withdraw") && isInt(args[2])) {//the int represents the bottle amount to be used
+            } else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("withdraw") && isInt(args[1])) {//the int represents the bottle amount to be used
                 Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker withdraw # fired");
-                int amountToRemove = Integer.parseInt(args[2]);
+                int amountToRemove = Integer.parseInt(args[1]);
                 if (countBottles(player, inv, amountToRemove) >= amountToRemove) {
                     bottlesToXP(amountToRemove, player, inv);
                     return true;
