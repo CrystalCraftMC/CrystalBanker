@@ -15,3 +15,6 @@ permissions:
   crystalbanker.transaction:
     description: Exchange dealing with XP and XP bottles.
     default: true
+  crystalbanker.reload:
+    description: Reload the configuration file.
+    default: op
