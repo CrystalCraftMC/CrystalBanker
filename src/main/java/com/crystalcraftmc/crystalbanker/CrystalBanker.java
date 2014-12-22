@@ -120,7 +120,7 @@ public class CrystalBanker extends JavaPlugin {
         for (int i = 0; i < inv.getSize(); i++) {
             ItemStack invSlot = inv.getItem(i);
             ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-            if (invSlot == null) continue;
+            if (invSlot.getType().equals(null)) continue;
             else if (!invSlot.getType().equals(xpBottle.getType())) continue;
             else if (invSlot.getType().equals(xpBottle.getType())) tally += invSlot.getAmount();
             else break;
@@ -155,7 +155,7 @@ public class CrystalBanker extends JavaPlugin {
         for (int i = 0; i < inv.getSize(); i++) {//search inventory for xp bottles
             ItemStack invSlot = inv.getItem(i);
             ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-            if (!invSlot.getType().equals(xpBottle.getType()) || invSlot == null) continue;//ignore if not xp
+            if (!invSlot.getType().equals(xpBottle.getType()) || invSlot.getType().equals(null)) continue;//ignore if not xp
             else if (invSlot.getType().equals(xpBottle.getType())) {//if xpBottles then...
                 if (leftToRemove >= 0) {//if more to remove then...
                     if (invSlot.getAmount() < leftToRemove) {//if found
