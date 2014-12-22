@@ -37,7 +37,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.Random;
 
-public class CrystalBanker extends JavaPlugin {
+class CrystalBanker extends JavaPlugin {
 
     public void onEnable() {
         getLogger().info(ChatColor.GRAY + "CrystalBanker has been initialized!");
@@ -79,10 +79,10 @@ public class CrystalBanker extends JavaPlugin {
                         xpToBottles(player, formulaTierOne(storeLevels, currentLevel, clXP, xpTally));
                         return true;
                     } else if (currentLevel <= 31) {
-                        xpToBottles(player, formulaTierTwo(storeLevels, currentLevel, clXP, xpTally));
+                        xpToBottles(player, formulaTierTwo(storeLevels, currentLevel, clXP));
                         return true;
                     } else if (currentLevel >= 32) {
-                        xpToBottles(player, formulaTierThree(storeLevels, currentLevel, clXP, xpTally));
+                        xpToBottles(player, formulaTierThree(storeLevels, currentLevel, clXP));
                         return true;
                     }
                 } else return false;
@@ -115,6 +115,7 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //searches inv and counts to see how many xp bottles you have in your inventory (needed method)
+    @SuppressWarnings("UnnecessaryContinue")
     private static int countBottles(Player player, Inventory inv, int amountToRemove) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count bottles fired");
         int tally = 0;
@@ -150,13 +151,14 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //changes bottles to xp which can be spent at the shops
+    @SuppressWarnings("UnnecessaryContinue")
     private static void bottlesToXP(int amountToRemove, Player player, Inventory inv) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: bottlesToXP has been fired. Searching and removing numeric values.");
         int leftToRemove = amountToRemove;
         for (int i = 0; i < inv.getSize(); i++) {//search inventory for xp bottles
             ItemStack invSlot = inv.getItem(i);
             ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-            if (!invSlot.getType().equals(xpBottle.getType()) || invSlot == null) continue;//ignore if not xp
+            if (!invSlot.getType().equals(xpBottle.getType())) continue;//ignore if not xp
             else if (invSlot.getType().equals(xpBottle.getType())) {//if xpBottles then...
                 if (leftToRemove >= 0) {//if more to remove then...
                     if (invSlot.getAmount() < leftToRemove) {//if found
@@ -209,39 +211,36 @@ public class CrystalBanker extends JavaPlugin {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: XP to bottles fired.");
         int currentXP = player.getTotalExperience();
         if (currentXP > totalXPToChange) {//amount of player xp is checked already so need to worry if player entered more than player has.
+            int bottles;
             float resultXP = 0;
             float trackXP = currentXP;
-            int i = 0;
             int targetXP = currentXP - totalXPToChange;
-            for (i = 0; trackXP > targetXP; i++) {
+            for (bottles = 0; trackXP > targetXP; bottles++) {
                 trackXP -= orbsPerBottle();
                 if (targetXP > 0 && targetXP <= trackXP) resultXP = trackXP;
                 else break;
             }
-            Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: number of bottles to award: " + i + "Debug: newXP (amount) (levels): " + "(" + resultXP + ")" + "(" + player.getLevel() + ")");
-            int bottles = i;
-            if (inventorySpace(player, player.getInventory()) >= i) {
+            Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: number of bottles to award: " + bottles + "Debug: newXP (amount) (levels): " + "(" + resultXP + ")" + "(" + player.getLevel() + ")");
+            if (inventorySpace(player.getInventory()) >= bottles) {
                 player.sendMessage(ChatColor.DARK_AQUA + "You deposit of " + totalXPToChange + " experience has been processed. Thank you for supporting Crystal Banks!");
                 player.setTotalExperience(Math.round(resultXP));
                 player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
             } else {
                 player.sendMessage(ChatColor.RED + "Due to lack of XP your deposit was canceled! " + "Crystal Banks forgives the overdraft, and waives all fees. Next time please ensure you enter the correct amount!");
-                return;
             }
         } else {
             player.sendMessage(ChatColor.RED + "Due to lack inventory space your transaction was canceled! " + "Crystal Banks forgives your awful teasing, but please! Next time! Have enough room in your inventory!");
-            return;
         }
     }
 
-    private static int inventorySpace(Player player, Inventory inv) {
+    @SuppressWarnings("UnnecessaryContinue")
+    private static int inventorySpace(Inventory inv) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count inventory space.");
         int tally = 0;
         ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
         for (int i = 0; i < inv.getSize(); i++) {
             ItemStack invSlot = inv.getItem(i);
             if (!invSlot.getType().equals(xpBottle.getType())) continue;
-            else if (invSlot.getType().equals(null)) tally += 64;
             else if (invSlot.getType().equals(xpBottle.getType())) {
                 if (invSlot.getAmount() >= 64) {
                     tally += (64 - invSlot.getAmount());
@@ -260,7 +259,8 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //Tier Two is the formula for leveling up for levels 17-31
-    private int formulaTierTwo(int useLevel, int currentLevel, int clXP, int xpTally) {
+    private int formulaTierTwo(int useLevel, int currentLevel, int clXP) {
+        int xpTally;
         if (useLevel <= currentLevel - 16) {
             int tempLevel = currentLevel - 16;
             int temp = 0;
@@ -283,10 +283,11 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //Tier Three is the formula for leveling up for levels 32+
-    private static int formulaTierThree(int useLevel, int currentLevel, int clXP, int xpTally) {
+    private static int formulaTierThree(int useLevel, int currentLevel, int clXP) {
         int targetLevel = currentLevel - useLevel;
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Experience at Target Level: " + targetLevel);//how many levels left
         if (targetLevel >= 0) {
+            int xpTally;
             if (useLevel <= currentLevel - 31) {//result level will be 31 or more
                 int tempLevel = currentLevel - 31;
                 int temp = 0;
