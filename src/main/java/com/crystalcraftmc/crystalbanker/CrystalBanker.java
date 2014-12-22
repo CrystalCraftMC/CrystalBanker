@@ -79,10 +79,10 @@ public class CrystalBanker extends JavaPlugin {
                         xpToBottles(player, formulaTierOne(storeLevels, currentLevel, clXP, xpTally));
                         return true;
                     } else if (currentLevel <= 31) {
-                        xpToBottles(player, forumlaTierTwo(storeLevels, currentLevel, clXP, xpTally));
+                        xpToBottles(player, formulaTierTwo(storeLevels, currentLevel, clXP, xpTally));
                         return true;
                     } else if (currentLevel >= 32) {
-                        xpToBottles(player, forumlaTierThree(storeLevels, currentLevel, clXP, xpTally));
+                        xpToBottles(player, formulaTierThree(storeLevels, currentLevel, clXP, xpTally));
                         return true;
                     }
                 } else return false;
@@ -99,7 +99,7 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //this cause mayhem and destruction to everyone... no, no, not the method, what the method represents, if return true;
-    public boolean isPlayer(CommandSender sender) {
+    private boolean isPlayer(CommandSender sender) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(ChatColor.RED + "You must be a player to use this command.");
             return false;
@@ -109,13 +109,13 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //Determines how many orbs are in a bottle: the value is between 3 and 11. THIS METHOD SHOULD (ALMOST) ALWAYS be in a FOR loop
-    public static float orbsPerBottle() {
+    private static float orbsPerBottle() {
         Random rand = new Random();
         return (rand.nextFloat() * (11 - 3)) + 3; //float helps the player, and increases player xp gain by 7% (a difference of 10k xp over 20,000 bottles)
     }
 
     //searches inv and counts to see how many xp bottles you have in your inventory (needed method)
-    public static int countBottles(Player player, Inventory inv, int amountToRemove) {
+    private static int countBottles(Player player, Inventory inv, int amountToRemove) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count bottles fired");
         int tally = 0;
         for (int i = 0; i < inv.getSize(); i++) {
@@ -138,7 +138,7 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //makes sure that the 2nd argument of the /crystalbanker command is an integer
-    public static boolean isInt(String bottlesToUse) {
+    private static boolean isInt(String bottlesToUse) {
         try {
             Integer.parseInt(bottlesToUse.trim());
             Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Your args[1] was: " + bottlesToUse);
@@ -150,7 +150,7 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //changes bottles to xp which can be spent at the shops
-    public static void bottlesToXP(int amountToRemove, Player player, Inventory inv) {
+    private static void bottlesToXP(int amountToRemove, Player player, Inventory inv) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: bottlesToXP has been fired. Searching and removing numeric values.");
         int leftToRemove = amountToRemove;
         for (int i = 0; i < inv.getSize(); i++) {//search inventory for xp bottles
@@ -192,7 +192,7 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //makes sure there are at least 7 levels on player, and that the change will not result in negative XP.
-    public static boolean countXP(Player player) {
+    private static boolean countXP(Player player) {
         int currentXP = player.getTotalExperience();
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Player's current XP amount (not level) is: " + currentXP);
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: To use command must have at least positive amount, and (not strict in some manners, but more than 7 levels)");
@@ -205,7 +205,7 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //stores a players xp into bottles
-    public static void xpToBottles(Player player, int totalXPToChange) {
+    private static void xpToBottles(Player player, int totalXPToChange) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: XP to bottles fired.");
         int currentXP = player.getTotalExperience();
         if (currentXP > totalXPToChange) {//amount of player xp is checked already so need to worry if player entered more than player has.
@@ -234,7 +234,7 @@ public class CrystalBanker extends JavaPlugin {
         }
     }
 
-    public static int inventorySpace(Player player, Inventory inv) {
+    private static int inventorySpace(Player player, Inventory inv) {
         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count inventory space.");
         int tally = 0;
         ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
@@ -253,14 +253,14 @@ public class CrystalBanker extends JavaPlugin {
 
     //these last three methods are the just formulas, and conversion rates of level to XP.
     //Tier One is the formula for leveling up for levels 1-16
-    public int formulaTierOne(int useLevel, int currentLevel, int clXP, int xpTally) {
+    private int formulaTierOne(int useLevel, int currentLevel, int clXP, int xpTally) {
         int targetLevel = currentLevel - useLevel;
         if (targetLevel >= 0) xpTally = clXP - (17 * (targetLevel));
         return xpTally; //Gives XP: Tier 1 Only
     }
 
     //Tier Two is the formula for leveling up for levels 17-31
-    public int forumlaTierTwo(int useLevel, int currentLevel, int clXP, int xpTally) {
+    private int formulaTierTwo(int useLevel, int currentLevel, int clXP, int xpTally) {
         if (useLevel <= currentLevel - 16) {
             int tempLevel = currentLevel - 16;
             int temp = 0;
@@ -283,9 +283,9 @@ public class CrystalBanker extends JavaPlugin {
     }
 
     //Tier Three is the formula for leveling up for levels 32+
-    public static int forumlaTierThree(int useLevel, int currentLevel, int clXP, int xpTally) {
+    private static int formulaTierThree(int useLevel, int currentLevel, int clXP, int xpTally) {
         int targetLevel = currentLevel - useLevel;
-        Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Experiance at Target Level: " + targetLevel);//how many levels left
+        Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Experience at Target Level: " + targetLevel);//how many levels left
         if (targetLevel >= 0) {
             if (useLevel <= currentLevel - 31) {//result level will be 31 or more
                 int tempLevel = currentLevel - 31;
