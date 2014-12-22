@@ -62,6 +62,7 @@ public class CrystalBanker extends JavaPlugin {
         if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             this.reloadConfig();
             player.sendMessage(ChatColor.GRAY + "Configuration reloaded!");
+            return true;
         }
 
         if (isPlayer(sender) && player.hasPermission("crystalbanker.transaction")) {
