@@ -233,99 +233,114 @@ class CrystalBanker extends JavaPlugin {
         }
     }
 
-    @SuppressWarnings("UnnecessaryContinue")
-    private static int inventorySpace(Inventory inv) {
-        Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count inventory space.");
-        int tally = 0;
-        ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-        for (int i = 0; i < inv.getSize(); i++) {
-            ItemStack invSlot = inv.getItem(i);
-            if (!invSlot.getType().equals(xpBottle.getType())) continue;
-            else if (invSlot.getType().equals(xpBottle.getType())) {
-                if (invSlot.getAmount() >= 64) {
-                    tally += (64 - invSlot.getAmount());
-                } else continue;
-            } else break;
-        }
-        return tally;
-    }
+	public static int inventorySpace(Player player, Inventory inv){
+		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count inventory space.");
+		int tally = 0;
+		ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
 
-    //these last three methods are the just formulas, and conversion rates of level to XP.
-    //Tier One is the formula for leveling up for levels 1-16
-    private int formulaTierOne(int useLevel, int currentLevel, int clXP, int xpTally) {
-        int targetLevel = currentLevel - useLevel;
-        if (targetLevel >= 0) xpTally = clXP - (17 * (targetLevel));
-        return xpTally; //Gives XP: Tier 1 Only
-    }
+		for (ItemStack i : player.getInventory()) {
+			if (i == null) {
+				tally += 64;
+			} 
+			else if (i.getType() == xpBottle.getType()) {
+				tally += 64 - i.getAmount();
+			}
+		}
+		return tally;
+	}
 
-    //Tier Two is the formula for leveling up for levels 17-31
-    private int formulaTierTwo(int useLevel, int currentLevel, int clXP) {
-        int xpTally;
-        if (useLevel <= currentLevel - 16) {
-            int tempLevel = currentLevel - 16;
-            int temp = 0;
-            for (int i = 0; i < useLevel; i++) {
-                temp += (3 * (tempLevel - i) + 17);
-            }
-            xpTally = clXP - temp;
-            return xpTally;//Gives XP: Tier 2 Only
-        } else if (useLevel > currentLevel - 16) {
-            int tempLevel = currentLevel - 16;
-            int temp = 0;
-            for (int i = 0; i < tempLevel; i++) {
-                temp += (3 * (tempLevel - i) + 17);
-            }
-            temp += 17 * (useLevel - tempLevel);
-            xpTally = clXP - temp;
-            return xpTally;
-        }//Gives XP: Tier 1 and 2
-        return 0;
-    }
+	//these last three methods are the just formulas, and conversion rates of level to XP.
+	//Tier One is the formula for leveling up for levels 1-16
+	public int formulaTierOne(int useLevel, int currentLevel, int clXP, int xpTally){
+		int targetLevel = currentLevel - useLevel;
+		int temp = 0;
+		if (targetLevel >= 0) {
+			for(int i = 0; i < useLevel; i++){//TODO TEST THIS OUT AS IS, IF LEVELS DON'T Return to 0, REVISIT THIS
+				temp += (2*(useLevel-i) + 7);
+			}
+		}
+		xpTally = clXP - temp;
+		return xpTally; //Gives XP: Tier 1 Only
+	}
 
-    //Tier Three is the formula for leveling up for levels 32+
-    private static int formulaTierThree(int useLevel, int currentLevel, int clXP) {
-        int targetLevel = currentLevel - useLevel;
-        Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Experience at Target Level: " + targetLevel);//how many levels left
-        if (targetLevel >= 0) {
-            int xpTally;
-            if (useLevel <= currentLevel - 31) {//result level will be 31 or more
-                int tempLevel = currentLevel - 31;
-                int temp = 0;
-                for (int i = 0; i < useLevel; i++) {
-                    temp += 10 * (tempLevel - i) + 62;
-                }
-                xpTally = clXP - temp;
-                return xpTally;//returns tier 3 XP that needs to be removed(counted and bottled)!
-            } else if (useLevel > currentLevel - 31) {//result intent level will be less than 31
-                int useOnTier3 = currentLevel - 31;//levels to use with formula 3
-                int total = 0;
-                for (int i = 0; i <= useOnTier3; i++) {
-                    total += (10 * (useOnTier3 - i) + 62);//add tier 3 xp to bottle
-                }
-                Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 3: " + useOnTier3);
-                useLevel -= useOnTier3;
-                int tier2Levels = (currentLevel - useOnTier3 - 16);
-                if (useLevel <= tier2Levels) {//leaving 16 or more levels left
-                    for (int i = 0; i < useLevel; i++) {
-                        total += (3 * (tier2Levels - i) + 17);
-                    }
-                    xpTally = clXP - total;
-                    Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 2:" + useLevel);
-                    return xpTally;//returns tier 2 and 3 XP that needs to be removed(counted and bottled)!
-                }
-                int useOnTier2 = useLevel - 16;
-                if (useLevel > currentLevel - useOnTier3 - 16) {//enough useLevels to access tier 1 this does not imply that the other methods agree
-                    for (int i = 0; i < useOnTier2; i++) {
-                        total += 3 * (useOnTier2 - i) + 17;
-                    }
-                    total += 17 * (useLevel - useOnTier2);
-                    xpTally = clXP - total;
-                    Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 2: " + useOnTier2);
-                    Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 1: " + (useLevel - useOnTier2));
-                    return xpTally; //returns tier 1 (if any) 2 and 3 XP that needs to be removed(counted and bottled)!
-                }
-            }
-        }
-        return 0;
-    }
+	//Tier Two is the formula for leveling up for levels 17-31
+	public int forumlaTierTwo(int useLevel, int currentLevel, int clXP, int xpTally){
+		if(useLevel <= currentLevel - 16){
+			int tempLevel = currentLevel - 16;
+			int temp = 0;
+			for(int i = 0; i < useLevel; i++){
+				temp += (5*(tempLevel-i) + 42);
+			}
+			xpTally = clXP - temp;
+			return xpTally;//Gives XP: Tier 2 Only
+		}
+		else if (useLevel > currentLevel - 16){
+			int tempLevel = currentLevel - 16;
+			int temp = 0;
+			for(int i = 0; i < tempLevel; i++){
+				temp += (5*(tempLevel-i) + 42);
+			}
+			int useTier1 = useLevel - tempLevel;
+			tempLevel = 16;
+			if (useTier1 >= 0) {
+				for(int i = 0; i < useTier1; i++){
+					temp += (2*(tempLevel-i) + 7);
+				}
+				xpTally = clXP - temp;
+				return xpTally;
+			}//Gives XP: Tier 1 and 2
+		}
+		return 0;
+	}
+
+	//Tier Three is the formula for leveling up for levels 32+
+	public static int forumlaTierThree(int useLevel, int currentLevel, int clXP, int xpTally){
+		int targetLevel = currentLevel - useLevel;
+		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Experiance at Target Level: " + targetLevel);//how many levels left
+		if (targetLevel >= 0){
+			if(useLevel <= currentLevel - 31){//result level will be 31 or more
+				int tempLevel = currentLevel - 31;
+				int temp = 0;
+				for(int i = 0; i < useLevel; i++){
+					temp += 9*(tempLevel-i) + 121;
+				}
+				xpTally = clXP - temp;
+				return xpTally;//returns tier 3 XP that needs to be removed(counted and bottled)!
+			}
+			else if (useLevel > currentLevel - 31){//result intent level will be less than 31
+				int useOnTier3 = currentLevel - 31;//levels to use with formula 3
+				int total = 0;
+				for(int i = 0; i <= useOnTier3; i++){
+					total += (9*(useOnTier3-i) + 121);//add tier 3 xp to bottle
+				}
+				Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 3: " + useOnTier3);
+				useLevel -= useOnTier3;
+				int tier2Levels = (currentLevel - useOnTier3 - 16);
+				if (useLevel <= tier2Levels) {//leaving 16 or more levels left
+					for(int i = 0; i < useLevel; i++){
+						total += (5*(tier2Levels-i) + 42);
+					}
+					xpTally = clXP - total;
+					Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 2:"+ useLevel);
+					return xpTally;//returns tier 2 and 3 XP that needs to be removed(counted and bottled)!
+				}
+				int useOnTier2 = useLevel - 16; //				int tier1Levels = (currentLevel - useOnTier3 - useOnTier2);
+				if(useLevel > currentLevel - useOnTier3 - 16) {//enough useLevels to access tier 1 this does not imply that the other methods agree
+					for(int i = 0; i < useOnTier2; i++){
+						total += 5*(useOnTier2-i) + 42;
+					}
+					int useOnTier1 = useLevel - useOnTier2 - useOnTier3;
+					int tempLevel = currentLevel - useOnTier2 -useOnTier3;
+					for(int i = 0; i < useOnTier1; i++){
+						total += (2*(tempLevel-i) + 7);
+					}
+					xpTally = clXP - total;
+					Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 2: " + useOnTier2);
+					Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug:Levels used tier 1: " + (useLevel - useOnTier2));
+					return xpTally; //returns tier 1 (if any) 2 and 3 XP that needs to be removed(counted and bottled)!		
+				}
+			}
+		}
+		return 0;
+	}
 }
