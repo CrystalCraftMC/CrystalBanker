@@ -2,7 +2,7 @@ name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
 version: 0.1
 description: Convert XP to bottles, and bottles to XP!
-authors: [jflory7, Jacc734, devastator10k]
+authors: [jflory7, Jacc734, devastator10k, Jwood9198]
 website: http://crystalcraftmc.com
 
 commands:
@@ -15,3 +15,6 @@ permissions:
   crystalbanker.transaction:
     description: Exchange dealing with XP and XP bottles.
     default: true
+  crystalbanker.reload:
+    description: Reload the configuration file.
+    default: op
