@@ -27,7 +27,6 @@ package com.crystalcraftmc.crystalbanker;
 import java.io.File;
 import java.util.Random;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -38,45 +37,57 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class CrystalBanker extends JavaPlugin {
-	//ch
+public class CrystalBanker extends JavaPlugin{
+
 	public void onEnable() {
 		getLogger().info(ChatColor.GRAY + "CrystalBanker has been initialized!");
 		try {
 			File database = new File(getDataFolder(), "config.yml");
 			if (!database.exists()) saveDefaultConfig();
 		} catch (Exception e1) {
+			getLogger().info(ChatColor.DARK_RED + "CrystalBanker _failed_ to initialize.");
 			e1.printStackTrace();
 		}
 	}
-	//ch
+
 	public void onDisable() {
 		getLogger().info(ChatColor.GRAY + "CrystalBanker has been stopped by the server.");
 	}
-	//ch
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
 		if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
-			reloadMethod(sender);
+			if (isPlayer(sender) && sender.isOp()) reloadMethod(sender);
+			else if (!isPlayer(sender)) reloadMethod(sender);
 		}
 
 		if (isPlayer(sender) && sender.hasPermission("crystalbanker.transaction")) {
 			Player player = (Player) sender;
 			Inventory inv = player.getInventory();
 
-			if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("deposit")) {
+			if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && isInt(args[1], player) && (args[0].equalsIgnoreCase("deposit")) || args[0].equalsIgnoreCase("store")) {
 				depositMethod(player, args[1]);
-			} 
-
-			else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("withdraw")) {
-				withdrawMethod(player, args[1], inv);
-			} 
-			else getLogger().info(ChatColor.RED + "Plugin failed to recognize commands.");
+				return true;
+			}
+			else if (cmd.getName().equalsIgnoreCase("crystalbanker") && (args[0].equalsIgnoreCase("deposit")) || args[0].equalsIgnoreCase("store")){
+				player.sendMessage(ChatColor.BLUE + "You can deposit " + player.getLevel() + " Levels. Note the number of levels you are allowed to deposit at a time depends on your inventory space.");
+			}
+			else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && isInt(args[1], player) && (args[0].equalsIgnoreCase("withdraw") || args[0].equalsIgnoreCase("use"))) {
+					withdrawMethod(player, args[1], inv);
+					return true;
+				}
+			else if(cmd.getName().equalsIgnoreCase("crystalbanker") && (args[0].equalsIgnoreCase("withdraw") || args[0].equalsIgnoreCase("use"))){
+				player.sendMessage(ChatColor.BLUE + "You can withdraw up to " + countBottles(player) + " bottles.");
+			}
+			else{
+				player.sendMessage(ChatColor.DARK_GRAY + "Usage: /CrystalBanker deposit [number of levels]");
+				player.sendMessage(ChatColor.DARK_GRAY + "Usage: /CrystalBanker withdraw [number of bottles]");
+			}
 		}
 		return false;
 	}
-	//ch
+
 	private boolean isPlayer(CommandSender sender) {
 		if (!(sender instanceof Player)) {
 			sender.sendMessage(ChatColor.RED + "You must be a player to use this command.");
@@ -85,18 +96,17 @@ public class CrystalBanker extends JavaPlugin {
 			return true;
 		}
 	}
-	//ch
+
 	private static float orbsPerBottle() {
 		Random rand = new Random();
 		return (rand.nextFloat() * (11 - 3) + 3);
 	}
 
-	private static int isInt(Player player, String bottlesToUse) {
+	private static int toInt(Player player, String bottlesToUse) {
 		int number;
 		try {
 			String temp = bottlesToUse.trim();
 			number = Integer.parseInt(temp);
-			Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Your args[1] was: " + number);
 		} catch (NumberFormatException nFE) {
 			player.sendMessage(ChatColor.RED + "There was a problem with the value you entered. Try again.");
 			return 0;
@@ -104,44 +114,38 @@ public class CrystalBanker extends JavaPlugin {
 		return number;
 	}
 
-	private static void bottlesToXP(int amountToRemove, Player player, Inventory inv) {
-		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: bottlesToXP has been fired. Searching and removing numeric values.");
+	private static void bottlesToXP(int amountToRemove, Player player) {
 		int leftToRemove = amountToRemove;
-		ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-		for (int i = 0; i < inv.getSize(); i++) {//search inventory for xp bottles
-			ItemStack invSlot = inv.getItem(i);
-			if (invSlot.isSimilar(xpBottle)) {//if xpBottles then...
-				if (leftToRemove >= 0) {//if more to remove then...
-					if (invSlot.getAmount() < leftToRemove) {//if found
-						leftToRemove -= invSlot.getAmount();
-						inv.clear(i);
-					} else if (invSlot.getAmount() == leftToRemove) {
-						inv.clear(i);
-						leftToRemove = 0;
-						break;
-					} else if (invSlot.getAmount() > leftToRemove) {
-						invSlot.setAmount((invSlot.getAmount() - leftToRemove));
-						leftToRemove = 0;
-						break;
+		PlayerInventory pi = player.getInventory();
+		ItemStack[] is = pi.getContents();
+		for(int i = 0; i < pi.getSize(); i++) {
+			if(is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
+				if(is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+					if (leftToRemove >= 0) {//if more to remove then...
+						if (is[i].getAmount() < leftToRemove) {//if found
+							leftToRemove -= is[i].getAmount();
+							is[i].setType(null);
+						} else if (is[i].getAmount() == leftToRemove) {
+							is[i].setType(null);
+							leftToRemove = 0;
+							break;
+						} else if (is[i].getAmount() > leftToRemove) {
+							is[i].setAmount((is[i].getAmount() - leftToRemove));
+							leftToRemove = 0;
+							break;
+						}
 					}
 				}
 			}
-			else continue;
 		}
-
-		//Add levels
-		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Preparing to translate numeric values into experience.");
-		if (leftToRemove == 0) {
+		if (leftToRemove == 0) {//Add levels
 			int xpOrbTotal = 0;
 			for (int i = 0; i < amountToRemove; i++) {//translate everything into orbs
 				int xpOrb = Math.round(orbsPerBottle());
-				Bukkit.broadcastMessage(ChatColor.GRAY + "Debug: Values of Orbs being output: " + i + ". " + xpOrb);
 				xpOrbTotal += xpOrb;
 			}
-			Bukkit.broadcastMessage(ChatColor.GRAY + "Debug: Values of TotalOrbs output: " + xpOrbTotal);
-			player.sendMessage(ChatColor.DARK_AQUA + "You withdrawal has been processed. Thank you for supporting Crystal Banks!");
+			player.sendMessage(ChatColor.DARK_AQUA + "You withdrawal of " + amountToRemove + " bottles has been processed. Thank you for supporting Crystal Banks!");
 			player.giveExp(xpOrbTotal);
-			Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Total Player xp after additional TotalOrbs: " + player.getTotalExperience());
 		}
 	}
 
@@ -151,41 +155,46 @@ public class CrystalBanker extends JavaPlugin {
 		return true;
 	}
 
-	//ch
-	private boolean withdrawMethod(Player player, String args, Inventory inv){
-		int amountToRemove = isInt(player, args);
-		if (countBottles(player, inv, amountToRemove)) {
-			bottlesToXP(amountToRemove, player, inv);
-			return true;
+	private static boolean isInt(String bottlesToUse, Player p) {
+		try {
+			Integer.parseInt(bottlesToUse.trim());
+		} catch (NumberFormatException nFE) {
+			p.sendMessage(ChatColor.RED + "You need to input an integer number. (USE: 1, 2, etc) (NOT: 2.13, 2/3, etc)");
+			return false;
 		}
-		else return false;
+		return true;
 	}
 	//ch
-	private static boolean countBottles(Player player, Inventory inv, int amountToRemove) {
-         Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Count bottles fired");
-         int tally = 0;
-         ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-         for (int i = 0; i < inv.getSize(); i++) {
-             ItemStack invSlot = inv.getItem(i);
-             if (invSlot.getType().equals(xpBottle.getType())) tally += invSlot.getAmount();
-         }
-         if (tally < amountToRemove) {
-             Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Bottles counted: " + tally);
-             player.sendMessage(ChatColor.RED + "You don't have enough xp bottles in your inventory to exchange the amount you entered.");
-             return false;
-         } else if (tally >= amountToRemove) {
-             player.sendMessage(ChatColor.GRAY + "XP Bottles counted: " + tally);
-             Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Bottles counted: " + tally);
-             return false;
-         }
-         return true;
-     }
+	private boolean withdrawMethod(Player player, String args, Inventory inv){
+		int amountToRemove = toInt(player, args);
+		if (countBottles(player) < amountToRemove) {
+			player.sendMessage(ChatColor.RED + "You don't have enough xp bottles ("+ countBottles(player) +") in your inventory to exchange the amount you entered (" + amountToRemove + ") .");
+			return false;
+		} else if (countBottles(player) >= amountToRemove) {
+			bottlesToXP(amountToRemove, player);
+			return true;
+		}
+		return false;
+	}
+	//ch
+	private static int countBottles(Player player) {
+		PlayerInventory pi = player.getInventory();
+		ItemStack[] is = pi.getContents();
+		int tally = 0;
+		for(int i = 0; i < pi.getSize(); i++) {
+			if(is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
+				if(is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+					tally += is[i].getAmount();
+				}
+			}
+		}
+		return tally;
+	}
 	//ch
 	private boolean depositMethod(Player player, String args){
-		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: /crystalbanker deposit");
-		int storeLevels = isInt(player, args);
+		int storeLevels = toInt(player, args);
 		int currentLevel = player.getLevel();
-		if (countXP(player)) {
+		if (countXP(player, storeLevels)) {
 			if (currentLevel <= 16) {
 				xpToBottles(player, formulaTierOne(storeLevels, currentLevel), storeLevels);
 				return true;
@@ -200,19 +209,17 @@ public class CrystalBanker extends JavaPlugin {
 		return false;
 	}
 	//ch
-	private static boolean countXP(Player player) {
-		int currentXP = player.getTotalExperience();
-		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: Player's current XP amount (not level) is: " + currentXP);
-		if (currentXP > 7)
+	private static boolean countXP(Player p, int amountToRemove) {
+		if (p.getLevel() >= amountToRemove)
 			return true;
 		else {
-			player.sendMessage(ChatColor.RED + "You have less than 1 level! Please have at least 1 level before retrying.");
+			p.sendMessage(ChatColor.RED + "You have " + p.getLevel() + " Levels. You tried to deposit " + amountToRemove + " Levels.");
+			p.sendMessage(ChatColor.RED + "Crystal Banks forgives the overdraft, and waives all fees. Next time please ensure you enter the correct amount!");
 			return false;
 		}
 	}
 	//ch
-	private static void xpToBottles(Player player, int xpToRemove, int uL) {
-		Bukkit.broadcastMessage(ChatColor.DARK_RED + "Debug: XP to bottles fired.");
+	private static boolean xpToBottles(Player player, int xpToRemove, int uL) {
 		int currentXP = player.getTotalExperience();
 		if (currentXP > (currentXP - xpToRemove)) {
 			int bottles = 0;
@@ -225,49 +232,46 @@ public class CrystalBanker extends JavaPlugin {
 				player.sendMessage(ChatColor.DARK_AQUA + "You deposited " + (xpToRemove) + " experience has been processed. Thank you for supporting Crystal Banks!");
 				player.setLevel(player.getLevel() - uL);
 				player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+				return true;
 			} else {
-				player.sendMessage(ChatColor.RED + "Due to lack inventory space your transaction was canceled! " + "Crystal Banks forgives your awful teasing, but please! Next time! Have enough room in your inventory!");
+				player.sendMessage(ChatColor.RED + "Due to lack of inventory space your transaction was canceled!"); 
+				player.sendMessage(ChatColor.RED + "Crystal Banks forgives you, but next time make sure to have enough room in your inventory!");
+				return false;
 			}
 		} else {
-			player.sendMessage(ChatColor.RED + "Due to lack of XP your deposit was canceled! " + "Crystal Banks forgives the overdraft, and waives all fees. Next time please ensure you enter the correct amount!");
+			return false;
 		}
 	}
 	//ch
 	private static int inventorySpaceV2(Player player) {
-			PlayerInventory pi = player.getInventory();
-			ItemStack[] is = pi.getContents(); //returns array of ItemStacks[] from inv
-			player.sendMessage(String.format("%s%d", "amount of indexes: ", is.length));
-			int tally = 0;
-			//ArrayList<Integer> emptySlots = new ArrayList<Integer>();
-			for(int i = 0; i < pi.getSize(); i++) {
-				if(is[i] == null || is[i].isSimilar(new ItemStack(Material.AIR))) {
-					tally += 64;
-				}
+		PlayerInventory pi = player.getInventory();
+		ItemStack[] is = pi.getContents(); //returns array of ItemStacks[] from inv
+		int tally = 0;
+		//ArrayList<Integer> emptySlots = new ArrayList<Integer>();
+		for(int i = 0; i < pi.getSize(); i++) {
+			if(is[i] == null || is[i].isSimilar(new ItemStack(Material.AIR))) {
+				tally += 64;
 			}
-			for(int i = 0; i < pi.getSize(); i++) { // pi = player inventory object
-				if(is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
-					if(is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
-						tally += 64-(is[i].getAmount());
-					}
-				}
-			}
-			return tally;
 		}
-
-	//Tier One is the formula for leveling up for levels 1-16
-	public int formulaTierOne(int useLevel, int currentLevel){
-		int targetLevel = currentLevel - useLevel;
-		int amountToRemove = 0;
-		if (targetLevel >= 0) {
-			for(int i = 0; i < useLevel; i++){
-				amountToRemove += (2*(useLevel-i) + 7);
+		for(int i = 0; i < pi.getSize(); i++) { // pi = player inventory object
+			if(is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
+				if(is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+					tally += 64-(is[i].getAmount());
+				}
 			}
+		}
+		return tally;
+	}
+	//Tier One is the formula for leveling up for levels 1-16
+	private int formulaTierOne(int useLevel, int currentLevel){
+		int amountToRemove = 0;
+		for(int i = 0; i < useLevel; i++){
+			amountToRemove += (2*(currentLevel-i) + 7);
 		}
 		return amountToRemove; //Gives XP: Tier 1 Only
 	}
-
 	//Tier Two is the formula for leveling up for levels 17-31
-	public int forumlaTierTwo(int useLevel, int currentLevel){
+	private int forumlaTierTwo(int useLevel, int currentLevel){
 		int amountToRemove = 0;
 		if(useLevel <= currentLevel - 16){
 			int tempLevel = currentLevel - 16;
@@ -292,9 +296,8 @@ public class CrystalBanker extends JavaPlugin {
 		}
 		return amountToRemove;
 	}
-
 	//Tier Three is the formula for leveling up for levels 32+
-	public static int forumlaTierThree(int useLevel, int currentLevel){
+	private static int forumlaTierThree(int useLevel, int currentLevel){
 		int targetLevel = currentLevel - useLevel;
 		if (targetLevel >= 0){
 			if(useLevel <= currentLevel - 31){//result level will be 31 or more
@@ -314,14 +317,14 @@ public class CrystalBanker extends JavaPlugin {
 				}
 				useLevel -= useOnTier3;
 				int tier2Levels = (currentLevel - useOnTier3 - 16);
-				if (useLevel <= tier2Levels) {//leaving 16 or more levels left
-					for(int i = 0; i < useLevel; i++){
+				if ((useLevel - useOnTier3) <= tier2Levels) {//leaving 16 or more levels left
+					for(int i = 0; i < (useLevel - useOnTier3); i++){
 						total += (5*(tier2Levels-i) + 42);
 					}
 					return total; //returns tier 2 and 3 XP that needs to be removed(counted and bottled)!
 				}
-				int useOnTier2 = useLevel - 16; //				int tier1Levels = (currentLevel - useOnTier3 - useOnTier2);
-				if(useLevel > currentLevel - useOnTier3 - 16) {//enough useLevels to access tier 1 this does not imply that the other methods agree
+				int useOnTier2 = (useLevel - useOnTier3) - 16; //int tier1Levels = (currentLevel - useOnTier3 - useOnTier2);
+				if((useLevel - useOnTier3) > currentLevel - useOnTier3 - 16) {//enough useLevels to access tier 1 this does not imply that the other methods agree
 					for(int i = 0; i < useOnTier2; i++){
 						total += 5*(useOnTier2-i) + 42;
 					}
@@ -337,4 +340,3 @@ public class CrystalBanker extends JavaPlugin {
 		return 0;
 	}
 }
-
