@@ -14,18 +14,19 @@
  *    limitations under the License.
  */
 
-import java.io.File;
-import java.util.Random;
+package com.crystalcraftmc.crystalbanker;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
+import java.util.Random;
 
 public class CrystalBanker extends JavaPlugin{
 
@@ -83,7 +84,6 @@ public class CrystalBanker extends JavaPlugin{
 	private void helpMsg(CommandSender sender) {
 		sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker deposit [levels]");
 		sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker withdraw [bottles]");
-		return;
 	}
 
 	private boolean isPlayer(CommandSender sender) {
@@ -161,10 +161,9 @@ public class CrystalBanker extends JavaPlugin{
 	private void reloadMethod(CommandSender sender){
 		this.reloadConfig();
 		sender.sendMessage(ChatColor.GRAY + "Configuration reloaded!");
-		return;
 	}
 
-	private boolean withdrawMethod(Player player, int amountToRemove, Inventory inv){
+	private boolean withdrawMethod(Player player, int amountToRemove){
 		if (countBottles(player) < amountToRemove) {
 			player.sendMessage(ChatColor.RED + "You don't have enough xp bottles ("+ countBottles(player) +") in your inventory to exchange the amount you entered (" + amountToRemove + ") .");
 			return true;
@@ -229,14 +228,11 @@ public class CrystalBanker extends JavaPlugin{
 				player.sendMessage(ChatColor.DARK_AQUA + "You deposited " + (xpToRemove) + " experience has been processed. Thank you for supporting Crystal Banks!");
 				player.setLevel(player.getLevel() - uL);
 				player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
-				return;
 			} else {
 				player.sendMessage(ChatColor.RED + "Due to lack of inventory space your transaction was canceled!"); 
 				player.sendMessage(ChatColor.RED + "Crystal Banks forgives you, but next time make sure to have enough room in your inventory!");
-				return;
 			}
 		} 
-		return;
 	}
 
 	private int inventorySpaceV2(Player player) {
