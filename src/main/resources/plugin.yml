@@ -1,6 +1,6 @@
 name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
-version: 0.1
+version: ${version}
 description: Convert XP to bottles, and bottles to XP!
 authors: [jflory7, Jacc734, devastator10k]
 website: http://crystalcraftmc.com
