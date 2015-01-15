@@ -62,7 +62,7 @@ public class CrystalBanker extends JavaPlugin{
 				}
 				else if ((args[0].equalsIgnoreCase("withdraw") || args[0].equalsIgnoreCase("use")) && isInt(args[1], sender)) {
 					int amountToRemove = toInt(player, args[1]);
-					withdrawMethod(player, amountToRemove, player.getInventory());
+					withdrawMethod(player, amountToRemove);
 					return true;
 				}
 			}
