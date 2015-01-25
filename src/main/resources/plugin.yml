@@ -1,20 +1,37 @@
 name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
-version: ${version}
-description: Convert XP to bottles, and bottles to XP!
-authors: [jflory7, Jacc734, devastator10k, Jwood9198]
-website: http://crystalcraftmc.com
+version: 0.0.1-SNAPSHOT
+description: Nothing like having the power of a bank at your finger tips.
+authors: [Jflory7, Jwood9198, Jacc734]
 
 commands:
-  crystalbanker:
-    description: Exchange dealing with XP and XP bottles.
-    aliases: [banker, ccmcbanker]
-    permission: crystalbanker-transaction
+    crystalbankerreload:
+         description: reload
+         aliases: [bankreload, bankR]
+         permission: crystalbanker.reload
+    crystalbankerdeposit:
+         description: deposit (# of levels)
+         aliases: [bankdeposit, bankD]
+         permission: crystalbanker.deposit
+    crystalbankerwithdraw:
+         description: withdraw (# of bottles)
+         aliases: [bankwithdraw, bankW]
+         permission: crystalbanker.withdraw
 
 permissions:
-  crystalbanker.transaction:
-    description: Exchange dealing with XP and XP bottles.
-    default: true
-  crystalbanker.reload:
-    description: Reload the configuration file.
-    default: op
+       crystalbanker.deposit:
+              description: Store levels into bottles
+              default: true
+       crystalbanker.withdraw:
+              description: Turn bottles into levels
+              default: true
+       crystalbanker.reload:
+              description: Reloads Plugin
+              default: op
+       crystalbanker.*:
+              description: Use all Bank commands
+              default: op
+              children:
+                  crystalbanker.deposit: true
+                  crystalbanker.withdraw: true
+                  crystalbanker.reload: op
