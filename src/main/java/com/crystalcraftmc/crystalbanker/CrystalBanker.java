@@ -14,6 +14,29 @@
  *    limitations under the License.
  */
 
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 CrystalCraftMC
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.crystalcraftmc.crystalbanker;
 
 import org.bukkit.ChatColor;
@@ -21,6 +44,7 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -48,42 +72,36 @@ public class CrystalBanker extends JavaPlugin{
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (cmd.getName().equalsIgnoreCase("crystalbanker") && sender.isOp() && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+		if (cmd.getName().equalsIgnoreCase("crystalbankerreload") && args.length == 0 && sender.hasPermission("crystalbanker.reload")) {
 			reloadMethod(sender);
 			return true;
 		}
-		if (isPlayer(sender) && sender.hasPermission("crystalbanker.transaction") && cmd.getName().equalsIgnoreCase("crystalbanker")) {
+		if (cmd.getName().equalsIgnoreCase("crystalbankerdeposit") && sender.hasPermission("crystalbanker.deposit") && isPlayer(sender)) {
 			Player player = (Player) sender;
-			if (args.length == 2) {
-				if ((args[0].equalsIgnoreCase("deposit") || args[0].equalsIgnoreCase("store")) && isInt(args[1], player)) {
-					int storeLevels = toInt(player, args[1]);
-					depositMethod(player, storeLevels);
-					return true;
-				}
-				else if ((args[0].equalsIgnoreCase("withdraw") || args[0].equalsIgnoreCase("use")) && isInt(args[1], sender)) {
-					int amountToRemove = toInt(player, args[1]);
-					withdrawMethod(player, amountToRemove);
-					return true;
-				}
-			}
-			if(args.length == 1) {
-				if (args[0].equalsIgnoreCase("deposit") || args[0].equalsIgnoreCase("store")) {
-					player.sendMessage(ChatColor.BLUE + "You can deposit " + player.getLevel() + " Levels. Note the number of levels you are allowed to deposit at a time depends on your inventory space.");
-					return true;
-				}
-				else if (args[0].equalsIgnoreCase("withdraw") || args[0].equalsIgnoreCase("use")) {
-					player.sendMessage(ChatColor.BLUE + "You can withdraw up to " + countBottles(player) + " bottles.");
-					return true;
-				}
+			if (args.length == 1 && isInt(args[0], player)) {
+				int storeLevels = toInt(player, args[0]);
+				depositMethod(player, storeLevels);
+				return true;
+			} else {
+				player.sendMessage(ChatColor.BLUE + "You can deposit " + player.getLevel() + " Levels.\nDeposit will cancel if you dont have enough inventory.");
+				sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker deposit [levels]");
+				return true;
 			}
 		}
-		helpMsg(sender);
+		if (cmd.getName().equalsIgnoreCase("crystalbankerwithdraw") && sender.hasPermission("crystalbanker.withdraw") && isPlayer(sender)) {
+			Player player = (Player) sender;
+			if (args.length == 1 &&isInt(args[0], player)) {
+				int amountToRemove = toInt(player, args[0]);
+				withdrawMethod(player, amountToRemove, player.getInventory());
+				return true;
+			} else {
+				player.sendMessage(ChatColor.BLUE + "You can withdraw up to " + countBottles(player) + " bottles.");
+				sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker withdraw [xpbottles]");
+				return true;
+			}
+		}
+		sender.sendMessage(ChatColor.GRAY + "The bank is closed today - just kidding!");
 		return false;
-	}
-
-	private void helpMsg(CommandSender sender) {
-		sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker deposit [levels]");
-		sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker withdraw [bottles]");
 	}
 
 	private boolean isPlayer(CommandSender sender) {
@@ -94,9 +112,9 @@ public class CrystalBanker extends JavaPlugin{
 			return true;
 	}
 
-	private int orbsPerBottle() {
+	private float orbsPerBottle() {
 		Random rand = new Random();
-		return (rand.nextInt(11 - 3) + 3);
+		return ((rand.nextFloat()*(11-3)) + 3);
 	}
 
 	private boolean isInt(String bottlesToUse, CommandSender sender) {
@@ -148,7 +166,7 @@ public class CrystalBanker extends JavaPlugin{
 		if (leftToRemove == 0) {
 			int xpOrbTotal = 0;
 			for (int i = 0; i < amountToRemove; i++) {
-				int xpOrb = orbsPerBottle();
+				int xpOrb = (int) Math.round(orbsPerBottle());
 				xpOrbTotal += xpOrb;
 			}
 			player.giveExp(xpOrbTotal);
@@ -161,9 +179,10 @@ public class CrystalBanker extends JavaPlugin{
 	private void reloadMethod(CommandSender sender){
 		this.reloadConfig();
 		sender.sendMessage(ChatColor.GRAY + "Configuration reloaded!");
+		return;
 	}
 
-	private boolean withdrawMethod(Player player, int amountToRemove){
+	private boolean withdrawMethod(Player player, int amountToRemove, Inventory inv){
 		if (countBottles(player) < amountToRemove) {
 			player.sendMessage(ChatColor.RED + "You don't have enough xp bottles ("+ countBottles(player) +") in your inventory to exchange the amount you entered (" + amountToRemove + ") .");
 			return true;
@@ -228,11 +247,14 @@ public class CrystalBanker extends JavaPlugin{
 				player.sendMessage(ChatColor.DARK_AQUA + "You deposited " + (xpToRemove) + " experience has been processed. Thank you for supporting Crystal Banks!");
 				player.setLevel(player.getLevel() - uL);
 				player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+				return;
 			} else {
 				player.sendMessage(ChatColor.RED + "Due to lack of inventory space your transaction was canceled!"); 
 				player.sendMessage(ChatColor.RED + "Crystal Banks forgives you, but next time make sure to have enough room in your inventory!");
+				return;
 			}
 		} 
+		return;
 	}
 
 	private int inventorySpaceV2(Player player) {
