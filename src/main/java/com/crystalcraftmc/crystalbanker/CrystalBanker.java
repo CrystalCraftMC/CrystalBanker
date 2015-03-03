@@ -14,29 +14,6 @@
  *    limitations under the License.
  */
 
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2014 CrystalCraftMC
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 package com.crystalcraftmc.crystalbanker;
 
 import org.bukkit.ChatColor;
@@ -72,38 +49,44 @@ public class CrystalBanker extends JavaPlugin{
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if (cmd.getName().equalsIgnoreCase("crystalbankerreload") && args.length == 0 && sender.hasPermission("crystalbanker.reload")) {
+		if (cmd.getName().equalsIgnoreCase("crystalbankerreload") && sender.hasPermission("crystalbanker.reload")) {
 			reloadMethod(sender);
 			return true;
 		}
-		if (cmd.getName().equalsIgnoreCase("crystalbankerdeposit") && sender.hasPermission("crystalbanker.deposit") && isPlayer(sender)) {
+		else if (cmd.getName().equalsIgnoreCase("crystalbankerhcasin") && sender.hasPermission("crystalbanker.cashin") && isPlayer(sender)) {
+			Player player = (Player) sender;
+			int amountToRemove = countBottles(player);
+			withdrawMethod(player, amountToRemove, player.getInventory());
+			return true;
+		}
+		else if (cmd.getName().equalsIgnoreCase("crystalbankerdeposit") && sender.hasPermission("crystalbanker.deposit") && isPlayer(sender)) {
 			Player player = (Player) sender;
 			if (args.length == 1 && isInt(args[0], player)) {
 				int storeLevels = toInt(player, args[0]);
 				depositMethod(player, storeLevels);
 				return true;
 			} else {
-				player.sendMessage(ChatColor.BLUE + "You can deposit " + player.getLevel() + " Levels.\nDeposit will cancel if you dont have enough inventory.");
+				player.sendMessage(ChatColor.BLUE + "You can deposit " + player.getLevel() + " Levels.\nNote the number of levels you are allowed to deposit at a time,\ndepends on having enough inventory space.");
 				sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker deposit [levels]");
 				return true;
 			}
 		}
-		if (cmd.getName().equalsIgnoreCase("crystalbankerwithdraw") && sender.hasPermission("crystalbanker.withdraw") && isPlayer(sender)) {
+		else if (cmd.getName().equalsIgnoreCase("crystalbankerwithdraw") && sender.hasPermission("crystalbanker.withdraw") && isPlayer(sender)) {
 			Player player = (Player) sender;
-			if (args.length == 1 &&isInt(args[0], player)) {
+			if (args.length == 1 && isInt(args[0], player)) {
 				int amountToRemove = toInt(player, args[0]);
 				withdrawMethod(player, amountToRemove, player.getInventory());
 				return true;
 			} else {
 				player.sendMessage(ChatColor.BLUE + "You can withdraw up to " + countBottles(player) + " bottles.");
 				sender.sendMessage(ChatColor.GOLD + "Usage: /CrystalBanker withdraw [xpbottles]");
-				return true;
+				return true;			
 			}
 		}
 		sender.sendMessage(ChatColor.GRAY + "The bank is closed today - just kidding!");
 		return false;
 	}
-
+	
 	private boolean isPlayer(CommandSender sender) {
 		if (!(sender instanceof Player)) {
 			sender.sendMessage(ChatColor.RED + "You must be a player to use this command.");
@@ -111,12 +94,16 @@ public class CrystalBanker extends JavaPlugin{
 		} else 
 			return true;
 	}
-
-	private float orbsPerBottle() {
+	
+	/** Determines how many exp orb per bottle should
+	 * be produced.
+	 * @return double
+	 */
+	private double orbsPerBottle() {
 		Random rand = new Random();
 		return ((rand.nextFloat()*(11-3)) + 3);
 	}
-
+	
 	private boolean isInt(String bottlesToUse, CommandSender sender) {
 		try {
 			Integer.parseInt(bottlesToUse.trim());
@@ -126,7 +113,7 @@ public class CrystalBanker extends JavaPlugin{
 		}
 		return true;
 	}
-
+	
 	private int toInt(Player player, String bottlesToUse) {
 		int number;
 		try {
@@ -275,7 +262,7 @@ public class CrystalBanker extends JavaPlugin{
 		}
 		return tally;
 	}
-	//Tier One is the formula for leveling up for levels 16
+
 	private int formulaTierOne(int useLevel, int currentLevel){
 		int amountToRemove = 0;
 		for(int i = 0; i < useLevel; i++){
@@ -283,7 +270,7 @@ public class CrystalBanker extends JavaPlugin{
 		}
 		return amountToRemove; //Gives XP: Tier 1 Only
 	}
-	//Tier Two is the formula for leveling up for levels 17-31
+
 	private static int formulaTierTwo(int useLevel, int currentLevel){
 		int amountToRemove = 0;
 		if(useLevel <= currentLevel - 16){
@@ -309,7 +296,7 @@ public class CrystalBanker extends JavaPlugin{
 		}
 		return amountToRemove;
 	}
-	//Tier Three is the formula for leveling up for levels 32+
+
 	private int formulaTierThree(int useLevel, int currentLevel){
 		int targetLevel = currentLevel - useLevel;
 		if (targetLevel >= 0){
