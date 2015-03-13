@@ -1,36 +1,29 @@
 name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
-version: 1.0
+version: 1.0.1
+website: http://crystalcraftmc.com
+authors: [Jacc734, Jwood9198, jflory7]
 description: Nothing like having the power of a bank at your finger tips.
-authors: [Jflory7, Jwood9198, Jacc734]
 
 commands:
- crystalbankerreload:
-  description: reload
-  aliases: [bankreload, bankr, cbr]
-  permission: crystalbanker.reload
- crystalbankerdeposit:
-  description: deposit number of levels
-  aliases: [bankdeposit, bankd, cbd]
-  permission: crystalbanker.deposit
- crystalbankerwithdraw:
-  description: withdraw number of bottles
-  aliases: [bankwithdraw, bankw, cbw]
-  permission: crystalbanker.withdraw
- crystalbankerhcasin:
-  description: Cash in all the bottles in your inventory.
-  aliases: [cbc, maxlevel, xpmax, cashin]
-  permission: crystalbanker.cashin
+  crystalbanker:
+    description: Cash in at the CrystalBank!
+    usage: /crystalbanker <deposit|withdraw|cash> [amount]
+    aliases: [banker, ccbanker, cb, xpbank]
+
 permissions:
- crystalbanker.deposit:
-  description: Store levels into bottles
-  default: true
- crystalbanker.withdraw:
-  description: Turn bottles into levels
-  default: true
- crystalbanker.reload:
-  description: Reloads Plugin
-  default: op
- crystalbanker.cashin:
-  description: Convert all bottles in inventory to xp
-  default: true
+  crystalbanker.deposit:
+    description: Store levels into bottles.
+    default: true
+  crystalbanker.withdraw:
+    description: Turn bottles into levels.
+    default: true
+  crystalbanker.reload:
+    description: Reload configuration file.
+    default: op
+  crystalbanker.cashin:
+    description: Convert all bottles in inventory to XP.
+    default: true
+  crystalbanker.help:
+    description: Get more information about the plugin.
+    default: true
