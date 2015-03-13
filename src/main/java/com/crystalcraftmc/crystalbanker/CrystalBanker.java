@@ -233,7 +233,7 @@ public class CrystalBanker extends JavaPlugin{
 				bottles++;
 			}
 			if (inventorySpaceV2(player) >= bottles) {
-				player.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (xpToRemove) + " levels has been processed. Thank you for your business!");
+				player.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (xpToRemove) + " orbs has been processed. Thank you for your business!");
 				player.setLevel(player.getLevel() - uL);
 				player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
 			} else {
