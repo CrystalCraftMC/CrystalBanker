@@ -60,18 +60,18 @@ public class CrystalBanker extends JavaPlugin{
         if (!(sender instanceof Player)) {
             sender.sendMessage("This command can only be run by a player.");
             return false;
-        } else if (cmd.getName().equalsIgnoreCase("crystalbanker") && sender.hasPermission("crystalbanker.help")) {
+        } else if (cmd.getName().equalsIgnoreCase("crystalbanker")) {
             Player p = (Player) sender;
 
             if (args.length > 0 && args.length < 3) {
-                if (args[0].equalsIgnoreCase("reload") && sender.hasPermission("crystalbanker.reload")) {
+                if (args[0].equalsIgnoreCase("reload") && p.hasPermission("crystalbanker.reload")) {
                     this.reloadConfig();
                     sender.sendMessage(ChatColor.GRAY + "The non-existent configuration was reloaded!");
-                } else if (args[0].equalsIgnoreCase("zero") && sender.hasPermission("crystalbanker.zero")) {
+                } else if (args[0].equalsIgnoreCase("zero") && p.hasPermission("crystalbanker.zero")) {
                     int amountToRemove = countBottles(p);
                     withdrawMethod(p, amountToRemove, p.getInventory());
                     return true;
-                } else if (args[0].equalsIgnoreCase("deposit") && sender.hasPermission("crystalbanker.deposit")) {
+                } else if (args[0].equalsIgnoreCase("deposit") && p.hasPermission("crystalbanker.deposit")) {
                     if (args.length == 2 && isInt(args[1], p)) {
                         int storeLevels = toInt(p, args[1]);
                         depositMethod(p, storeLevels);
@@ -82,20 +82,20 @@ public class CrystalBanker extends JavaPlugin{
                         sender.sendMessage(ChatColor.GOLD + "Usage: /crystalbanker deposit [number of levels]");
                         return false;
                     }
-                } else if (args[0].equalsIgnoreCase("withdraw") && sender.hasPermission("crystalbanker.withdraw")) {
+                } else if (args[0].equalsIgnoreCase("withdraw") && p.hasPermission("crystalbanker.withdraw")) {
                     if (args.length == 2 && isInt(args[1], p)) {
                         int amountToRemove = toInt(p, args[1]);
                         withdrawMethod(p, amountToRemove, p.getInventory());
                         return true;
                     } else {
-                        p.sendMessage(ChatColor.BLUE + "You can withdraw up to " + countBottles(p) + " bottles.");
-                        sender.sendMessage(ChatColor.GOLD + "Usage: /crystalbanker withdraw [number of bottles]");
+                        p.sendMessage(net.md_5.bungee.api.ChatColor.BLUE + "You can withdraw up to " + countBottles(p) + " bottles.");
+                        sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "Usage: /crystalbanker withdraw [number of bottles]");
                         return true;
                     }
                 } else return false;
             }
         }
-        sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "CrystalBanker Help\n" +
+        sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "CrystalBanker Help:\n" +
                 net.md_5.bungee.api.ChatColor.BLUE + "/crystalbanker deposit [number of levels]\n" +
                 "/crystalbanker withdraw [number of bottles]\n" +
                 "/crystalbanker zero " + net.md_5.bungee.api.ChatColor.GRAY + "(to cash in all XP bottles)");

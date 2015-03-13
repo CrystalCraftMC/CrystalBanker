@@ -1,6 +1,6 @@
 name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
-version: 1.0.2
+version: 1.0.2b
 website: http://crystalcraftmc.com
 authors: [Jacc734, Jwood9198, jflory7]
 description: Nothing like having the power of a bank at your finger tips.
@@ -12,15 +12,22 @@ commands:
     aliases: [banker, ccbanker, cb, xpbank]
 
 permissions:
+  crystalbanker.player.*:
+    description: All player permissions for CrystalBanker
+    children:
+      crystalbanker.deposit: true
+      crystalbanker.withdraw: true
+      crystalbanker.zero: true
+      crystalbanker.reload: false
   crystalbanker.deposit:
     description: Store levels into bottles.
-    default: false
+    default: op
   crystalbanker.withdraw:
     description: Turn bottles into levels.
-    default: false
-  crystalbanker.reload:
-    description: Reload configuration file.
-    default: false
+    default: op
   crystalbanker.zero:
     description: Convert all bottles in inventory to XP.
-    default: false
+    default: op
+  crystalbanker.reload:
+    description: Reload configuration file.
+    default: op
