@@ -1,1 +1,4 @@
 # CrystalBanker Configuration File
+#Glass ability not implemented in code yet.
+#Use glass bottles? true or false. Defaulted to false.
+require-glass: false

@@ -27,7 +27,6 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Random;
 
 public class CrystalBanker extends JavaPlugin{
@@ -42,13 +41,6 @@ public class CrystalBanker extends JavaPlugin{
 			getLogger().info("CrystalBanker _failed_ to initialize.");
 			e1.printStackTrace();
 		}
-
-        try {
-            MetricsLite metrics = new MetricsLite(this);
-            metrics.start();
-        } catch (IOException e) {
-            // Failed to submit the stats :-(
-        }
 	}
 
 	public void onDisable() {
@@ -57,61 +49,65 @@ public class CrystalBanker extends JavaPlugin{
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("This command can only be run by a player.");
-            return false;
-        } else if (cmd.getName().equalsIgnoreCase("crystalbanker")) {
-            Player p = (Player) sender;
+		if (!(sender instanceof Player)) {
+			sender.sendMessage("This command can only be run by a player.");
+			return false;
+		} else if (cmd.getName().equalsIgnoreCase("crystalbanker")) {
+			Player p = (Player) sender;
+		
 
-            if (args.length > 0 && args.length < 3) {
-                if (args[0].equalsIgnoreCase("reload") && p.hasPermission("crystalbanker.reload")) {
-                    this.reloadConfig();
-                    sender.sendMessage(ChatColor.GRAY + "The non-existent configuration was reloaded!");
-                } else if (args[0].equalsIgnoreCase("zero") && p.hasPermission("crystalbanker.zero")) {
-                    int amountToRemove = countBottles(p);
-                    withdrawMethod(p, amountToRemove, p.getInventory());
-                    return true;
-                } else if (args[0].equalsIgnoreCase("deposit") && p.hasPermission("crystalbanker.deposit")) {
-                    if (args.length == 2 && isInt(args[1], p)) {
-                        int storeLevels = toInt(p, args[1]);
-                        depositMethod(p, storeLevels);
-                        return true;
-                    } else {
-                        p.sendMessage(net.md_5.bungee.api.ChatColor.RED + "You can deposit " + p.getLevel() + " levels.\n"
-                                + net.md_5.bungee.api.ChatColor.GRAY +"Note: The number of levels you are allowed to deposit at a time depends on having enough inventory space.");
-                        sender.sendMessage(ChatColor.GOLD + "Usage: /crystalbanker deposit [number of levels]");
-                        return false;
-                    }
-                } else if (args[0].equalsIgnoreCase("withdraw") && p.hasPermission("crystalbanker.withdraw")) {
-                    if (args.length == 2 && isInt(args[1], p)) {
-                        int amountToRemove = toInt(p, args[1]);
-                        withdrawMethod(p, amountToRemove, p.getInventory());
-                        return true;
-                    } else {
-                        p.sendMessage(net.md_5.bungee.api.ChatColor.BLUE + "You can withdraw up to " + countBottles(p) + " bottles.");
-                        sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "Usage: /crystalbanker withdraw [number of bottles]");
-                        return true;
-                    }
-                } else return false;
-            }
-        }
-        sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "CrystalBanker Help:\n" +
-                net.md_5.bungee.api.ChatColor.BLUE + "/crystalbanker deposit [number of levels]\n" +
-                "/crystalbanker withdraw [number of bottles]\n" +
-                "/crystalbanker zero " + net.md_5.bungee.api.ChatColor.GRAY + "(to cash in all XP bottles)");
-        return true;
-    }
+			if (args.length > 0 && args.length < 3) {
+				if (args[0].equalsIgnoreCase("reload") && p.hasPermission("crystalbanker.reload")) {
+					this.reloadConfig();
+					sender.sendMessage(ChatColor.GRAY + "The configuration was reloaded!");
+				} else if (args[0].equalsIgnoreCase("zero") && p.hasPermission("crystalbanker.zero")) {
+					int amountToRemove = countBottles(p);
+					withdrawMethod(p, amountToRemove, p.getInventory());
+					return true;
+				} else if (args[0].equalsIgnoreCase("cash") && p.hasPermission("crystalbanker.cash")) {//TODO tracker
+					cash(p);
+					return true;
+				} else if (args[0].equalsIgnoreCase("deposit") && p.hasPermission("crystalbanker.deposit")) {
+					if (args.length == 2 && isInt(args[1], p)) {
+						int storeLevels = toInt(p, args[1]);
+						depositMethod(p, storeLevels);
+						return true;
+					} else {
+						p.sendMessage(net.md_5.bungee.api.ChatColor.RED + "You can deposit " + p.getLevel() + " levels.\n"
+								+ net.md_5.bungee.api.ChatColor.GRAY +"Note: The number of levels you are allowed to deposit at a time depends on having enough inventory space.");
+						sender.sendMessage(ChatColor.GOLD + "Usage: /crystalbanker deposit [number of levels]");
+						return false;
+					}
+				} else if (args[0].equalsIgnoreCase("withdraw") && p.hasPermission("crystalbanker.withdraw")) {
+					if (args.length == 2 && isInt(args[1], p)) {
+						int amountToRemove = toInt(p, args[1]);
+						withdrawMethod(p, amountToRemove, p.getInventory());
+						return true;
+					} else {
+						p.sendMessage(net.md_5.bungee.api.ChatColor.BLUE + "You can withdraw up to " + countBottles(p) + " bottles.");
+						sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "Usage: /crystalbanker withdraw [number of bottles]");
+						return true;
+					}
+				} else return false;
+			}
+		}
+		sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "CrystalBanker Help:\n" +
+				net.md_5.bungee.api.ChatColor.BLUE + "/crystalbanker deposit [number of levels]\n" +
+				"/crystalbanker withdraw [number of bottles]\n" +
+				"/crystalbanker zero " + net.md_5.bungee.api.ChatColor.GRAY + "(to cash in all XP bottles)");
+		return true;
+	}
 
-	
+
 	/**
-     * Determines how many XP orbs per bottle should be produced.
+	 * Determines how many XP orbs per bottle should be produced.
 	 * @return double
 	 */
 	private double orbsPerBottle() {
 		Random rand = new Random();
 		return ((rand.nextFloat()*(11-3)) + 3);
 	}
-	
+
 	private boolean isInt(String bottlesToUse, CommandSender sender) {
 		try {
 			Integer.parseInt(bottlesToUse.trim());
@@ -121,7 +117,7 @@ public class CrystalBanker extends JavaPlugin{
 		}
 		return true;
 	}
-	
+
 	private int toInt(Player player, String bottlesToUse) {
 		int number;
 		try {
@@ -196,6 +192,7 @@ public class CrystalBanker extends JavaPlugin{
 		return tally;
 	}
 
+	//TODO REBUILD ALL METHODS USING LEVELS!
 	private boolean depositMethod(Player player, int storeLevels){
 		int currentLevel = player.getLevel();
 		if (countXP(player, storeLevels)) {
@@ -213,6 +210,7 @@ public class CrystalBanker extends JavaPlugin{
 		return false;
 	}
 
+	//TODO THIS MAY NEED TO BE DONE IF WE NO LONGER USE FULL LEVELS TO ACCESS ITEMS
 	private boolean countXP(Player p, int amountToRemove) {
 		if (p.getLevel() >= amountToRemove)
 			return true;
@@ -220,6 +218,49 @@ public class CrystalBanker extends JavaPlugin{
 			p.sendMessage(ChatColor.RED + "You have " + p.getLevel() + " levels. You tried to deposit " + amountToRemove + " levels.");
 			p.sendMessage(ChatColor.RED + "CrystalBanker forgives the overdraft and waives all fees. Next time, please ensure you enter the correct amount!");
 			return false;
+		}
+	}
+
+	private void cash(Player p) {//TODO Build a fill inventory with EXP bottles METHODS
+		int currentXP = p.getTotalExperience();
+		//more EXP than zero
+		if (currentXP > 0) {
+			int bottles = 0;
+			float trackXP = currentXP;
+			int maxBottleAmount = inventorySpaceV2(p);
+
+			while (bottles < maxBottleAmount && (trackXP > 0)) {
+				trackXP -= orbsPerBottle();
+				bottles++;
+			}
+			if(trackXP < 0) {
+				trackXP = 0;
+				bottles--;
+			}
+			if (bottles > maxBottleAmount) {
+				bottles--;
+				p.sendMessage(ChatColor.DARK_AQUA + "Your complete deposit of " + currentXP + " orbs has been processed. Thank you for your business!");
+				p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " orbs remaining, and gained " + bottles + " bottles.");
+				p.setExp((float)0);
+				p.setLevel(0);
+				p.setTotalExperience(0);
+				p.giveExp(Math.round(trackXP));
+				p.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+				p.sendMessage(ChatColor.DARK_AQUA + "Your complete deposit of " + currentXP + " orbs has been processed. Thank you for your business!");
+				p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " of "+ p.getTotalExperience()  + " orbs remaining, and gained " + bottles + " bottles.");
+				return;
+			} else {
+				p.setExp((float)0);
+				p.setLevel(0);
+				p.setTotalExperience(0);
+				p.giveExp(Math.round(trackXP));
+				p.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+				p.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (currentXP-trackXP) + " orbs has been processed. Thank you for your business!");
+				p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " of "+ p.getTotalExperience()  + " orbs remaining, and gained " + bottles + " bottles.");
+				return;
+			}
+		} else {
+			p.sendMessage(ChatColor.GRAY + "You don't have any experience points.");
 		}
 	}
 
@@ -232,13 +273,21 @@ public class CrystalBanker extends JavaPlugin{
 				trackXP -= orbsPerBottle();
 				bottles++;
 			}
+			if(trackXP < 0) {
+				trackXP = 0;
+				bottles--;
+			}
 			if (inventorySpaceV2(player) >= bottles) {
 				player.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (xpToRemove) + " orbs has been processed. Thank you for your business!");
-				player.setLevel(player.getLevel() - uL);
+				//!!!!FLAG NOTE NEW CHANGE TEST THROUGHLY BEFORE PUBLISHING!!!!
+				
+				player.setExp((float) 0);
+				player.setLevel(0);
+				player.setTotalExperience(0);
+				player.giveExp((int) trackXP);
 				player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
 			} else {
 				player.sendMessage(ChatColor.RED + "Due to lack of inventory space, your transaction was canceled!");
-				player.sendMessage(ChatColor.RED + "CrystalBanker forgives you, but next time, make sure to have enough room in your inventory!");
 			}
 		} 
 	}
@@ -262,14 +311,15 @@ public class CrystalBanker extends JavaPlugin{
 		return tally;
 	}
 
-	private int formulaTierOne(int useLevel, int currentLevel){
+	//DO NOT TOUCH THIS COMMENT: FOR LEVELS 1, 2, 3, ..., 14, 15, 16? TEST
+	private static int formulaTierOne(int useLevel, int currentLevel){
 		int amountToRemove = 0;
 		for(int i = 0; i < useLevel; i++){
 			amountToRemove += (2*(currentLevel-i) + 5);
 		}
 		return amountToRemove; //Gives XP: Tier 1 Only
 	}
-
+	//DO NOT TOUCH THIS COMMENT: FOR LEVELS 1, 2, ..., 16?, 17, 18, ..., 30, 31?, 32? TEST
 	private static int formulaTierTwo(int useLevel, int currentLevel){
 		int amountToRemove = 0;
 		if(useLevel <= currentLevel - 16){
@@ -285,17 +335,18 @@ public class CrystalBanker extends JavaPlugin{
 				amountToRemove += (5*(tempLevel-i) + 37);
 			}
 			int useTier1 = useLevel - tempLevel;
-			tempLevel = 16;
-			if (useTier1 >= 0) {
-				for(int i = 0; i < useTier1; i++){
-					amountToRemove += (2*(tempLevel-i) + 5);
-				}
-				return amountToRemove;
-			}//Gives XP: Tier 1 and 2
+			amountToRemove += formulaTierOne(useTier1, 16);
+			//TODO OLD FUNCTION KEEP INCASE OF ISSUES			tempLevel = 16;
+			//			if (useTier1 >= 0) {
+			//				for(int i = 0; i < useTier1; i++){
+			//					amountToRemove += (2*(tempLevel-i) + 5);
+			//				}
+			//				return amountToRemove;
+			//}Gives XP: Tier 1 and 2
 		}
 		return amountToRemove;
 	}
-
+	//DO NOT TOUCH THIS COMMENT: FOR LEVELS 1, 2, 3, ..., 14, 15, 16? TEST
 	private int formulaTierThree(int useLevel, int currentLevel){
 		int targetLevel = currentLevel - useLevel;
 		if (targetLevel >= 0){
