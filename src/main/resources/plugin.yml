@@ -8,7 +8,7 @@ description: Nothing like having the power of a bank at your finger tips.
 commands:
   crystalbanker:
     description: Cash in at the CrystalBank!
-    usage: /crystalbanker <deposit|withdraw|cash> [amount]
+    usage: /crystalbanker <deposit|withdraw|zero> [amount]
     aliases: [banker, ccbanker, cb, xpbank]
 
 permissions:
@@ -18,6 +18,7 @@ permissions:
       crystalbanker.deposit: true
       crystalbanker.withdraw: true
       crystalbanker.zero: true
+      crystalbanker.cash: true
   crystalbanker.deposit:
     description: Store levels into bottles.
     default: op
@@ -26,6 +27,9 @@ permissions:
     default: op
   crystalbanker.zero:
     description: Convert all bottles in inventory to XP.
+    default: op
+  crystalbanker.cash:
+    description: Convert levels to max amount of bottles player's inventory can hold.
     default: op
   crystalbanker.reload:
     description: Reload configuration file.
