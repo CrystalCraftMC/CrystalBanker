@@ -1,4 +1,9 @@
 # CrystalBanker Configuration File
-# Revision: 1.0
+# Revision: 1.1
+#
 
+# Name of your server's "bank"
 bank-name: Bank of CrystalCraftMC
+
+# Use glass bottles? (Glass ability not implemented in code yet)
+require-glass: false

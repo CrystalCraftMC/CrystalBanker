@@ -1,20 +1,36 @@
 name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
-version: 0.1.1
+version: 1.0.5
 description: Convert experience orbs to bottles and bottles to experience orbs.
 authors: [jflory7, Jacc734, Jwood9198]
-website: https://crystalcraftmc.com
+website: https://github.com/CrystalCraftMC/CrystalBanker
 
 commands:
   crystalbanker:
-    description: Exchange dealing with XP and XP bottles.
-    aliases: [banker, ccmcbanker]
-    permission: crystalbanker.transaction
+    description: Cash in at the CrystalBank!
+    usage: /crystalbanker <deposit|withdraw|zero> [amount]
+    aliases: [banker, ccbanker, cb, xpbank]
 
 permissions:
-  crystalbanker.transaction:
-    description: Exchange dealing with experience orbs and experience bottles.
-    default: true
+  crystalbanker.player.*:
+    description: All player permissions for CrystalBanker
+    children:
+      crystalbanker.deposit: true
+      crystalbanker.withdraw: true
+      crystalbanker.zero: true
+      crystalbanker.cash: true
+  crystalbanker.deposit:
+    description: Store levels into bottles.
+    default: op
+  crystalbanker.withdraw:
+    description: Turn bottles into levels.
+    default: op
+  crystalbanker.zero:
+    description: Convert all bottles in inventory to XP.
+    default: op
+  crystalbanker.cash:
+    description: Convert levels to max amount of bottles player's inventory can hold.
+    default: op
   crystalbanker.reload:
-    description: Reload the configuration file.
+    description: Reload configuration file.
     default: op

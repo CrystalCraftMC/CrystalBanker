@@ -8,12 +8,11 @@
 
 package com.crystalcraftmc.crystalbanker;
 
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,6 +43,7 @@ public class CrystalBanker extends JavaPlugin {
             File database = new File(getDataFolder(), "config.yml");
             if (!database.exists()) saveDefaultConfig();
         } catch (Exception e1) {
+            getLogger().info(ChatColor.RED + "CrystalBanker failed to initialize.");
             e1.printStackTrace();
         }
     }
@@ -52,7 +52,7 @@ public class CrystalBanker extends JavaPlugin {
      * Method executed on server shutdown.
      */
     public void onDisable() {
-        getLogger().info(ChatColor.GRAY + "CrystalBanker has been stopped by the server.");
+        getLogger().info("CrystalBanker has stopped.");
     }
 
     /**
@@ -66,46 +66,54 @@ public class CrystalBanker extends JavaPlugin {
      */
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("This command can only be run by a player.");
+            return false;
+        } else if (cmd.getName().equalsIgnoreCase("crystalbanker")) {
+            Player p = (Player) sender;
 
-        // Reload the plugin configuration
-        if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 1 && args[0].equalsIgnoreCase("reload")) {
-            reloadConf(sender);
-            return true;
-        }
-
-        // Handles transactions
-        else if (isPlayer(sender) && sender.hasPermission("crystalbanker.transaction")) {
-
-            // Variables
-            Player player = (Player) sender;
-            Inventory inv = player.getInventory();
-
-            if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("deposit")) {
-                depositOrbs(player, args[1]);
-                return true;
-            } else if (cmd.getName().equalsIgnoreCase("crystalbanker") && args.length == 2 && args[0].equalsIgnoreCase("withdraw")) {
-                withdrawMethod(player, args[1], inv);
-                return true;
+            if (args.length > 0 && args.length < 3) {
+                if (args[0].equalsIgnoreCase("reload") && p.hasPermission("crystalbanker.reload")) {
+                    this.reloadConfig();
+                    sender.sendMessage(ChatColor.GRAY + "The configuration was reloaded!");
+                } else if (args[0].equalsIgnoreCase("zero") && p.hasPermission("crystalbanker.zero")) {
+                    int amountToRemove = countBottles(p);
+                    withdrawMethod(p, amountToRemove);
+                    return true;
+                } else if (args[0].equalsIgnoreCase("cash") && p.hasPermission("crystalbanker.cash")) {
+                    cash(p);
+                    return true;
+                } else if (args[0].equalsIgnoreCase("deposit") && p.hasPermission("crystalbanker.deposit")) {
+                    if (args.length == 2 && isInt(args[1], p)) {
+                        int storeLevels = toInt(p, args[1]);
+                        depositMethod(p, storeLevels);
+                        return true;
+                    } else {
+                        p.sendMessage(net.md_5.bungee.api.ChatColor.RED + "You can deposit " + p.getLevel() + " levels.\n"
+                                + net.md_5.bungee.api.ChatColor.GRAY + "Note: The number of levels you are allowed to deposit at a time depends on having enough inventory space.");
+                        sender.sendMessage(ChatColor.GOLD + "Usage: /crystalbanker deposit [number of levels]");
+                        return false;
+                    }
+                } else if (args[0].equalsIgnoreCase("withdraw") && p.hasPermission("crystalbanker.withdraw")) {
+                    if (args.length == 2 && isInt(args[1], p)) {
+                        int amountToRemove = toInt(p, args[1]);
+                        withdrawMethod(p, amountToRemove);
+                        return true;
+                    } else {
+                        p.sendMessage(net.md_5.bungee.api.ChatColor.BLUE + "You can withdraw up to " + countBottles(p) + " bottles.");
+                        sender.sendMessage(net.md_5.bungee.api.ChatColor.GOLD + "Usage: /crystalbanker withdraw [number of bottles]");
+                        return true;
+                    }
+                } else return false;
             }
         }
-        getLogger().info(ChatColor.RED + "Plugin failed to recognize commands.");
-        return false;
+        sender.sendMessage(ChatColor.GOLD + "CrystalBanker Help:\n" +
+                ChatColor.BLUE + "/crystalbanker deposit [number of levels]\n" +
+                "/crystalbanker withdraw [number of bottles]\n" +
+                "/crystalbanker zero " + ChatColor.GRAY + "(to cash in all XP bottles)");
+        return true;
     }
 
-    /**
-     * Checks to see if the command sender is indeed a player.
-     *
-     * @param sender the sender of the command we want to check
-     * @return true if the sender is a player
-     */
-    private boolean isPlayer(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "You must be a player to use this command.");
-            return false;
-        } else {
-            return true;
-        }
-    }
 
     /**
      * Calculates the approximate number of orbs to be given per bottle of experience. Randomness is introduced in an
@@ -113,9 +121,26 @@ public class CrystalBanker extends JavaPlugin {
      *
      * @return the number of experience orbs for a bottle of experience
      */
-    private static float orbsPerBottle() {
+    private double orbsPerBottle() {
         Random rand = new Random();
-        return (rand.nextFloat() * (11 - 3) + 3);
+        return ((rand.nextFloat() * (11 - 3)) + 3);
+    }
+
+    /**
+     * Checks to see if the number of bottles to use for conversion is an integer.
+     *
+     * @param bottlesToUse the number of bottles to convert
+     * @param sender the player whose input is being validated
+     * @return true if the number is an integer
+     */
+    private boolean isInt(String bottlesToUse, CommandSender sender) {
+        try {
+            Integer.parseInt(bottlesToUse.trim());
+        } catch (NumberFormatException nFE) {
+            sender.sendMessage(ChatColor.RED + "You need to input an integer number.");
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -126,12 +151,12 @@ public class CrystalBanker extends JavaPlugin {
      * @param bottlesToUse the number of bottles to be used for converting
      * @return int an integer value of the number of bottles to use
      */
-    private int isInt(Player player, String bottlesToUse) {
+    private int toInt(Player player, String bottlesToUse) {
         int number;
         try {
-            number = Integer.parseInt(bottlesToUse.trim());
-            this.getLogger().finest("*** DEBUG ***\n" + "Your args[1] was: " + number + "\n*** DEBUG ***");
-        } catch (NumberFormatException e) {
+            String temp = bottlesToUse.trim();
+            number = Integer.parseInt(temp);
+        } catch (NumberFormatException nFE) {
             player.sendMessage(ChatColor.RED + "There was a problem with the value you entered. Try again.");
             return 0;
         }
@@ -144,169 +169,167 @@ public class CrystalBanker extends JavaPlugin {
      *
      * @param amountToRemove the number of bottles to convert to experience orbs
      * @param player         the player who is converting bottles
-     * @param inv            the inventory of the player who is converting bottles
      */
-    private void bottlesToXP(int amountToRemove, Player player, Inventory inv) {
-        this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                "bottlesToXP() fired. Searching and removing numeric values.\n*** DEBUG ***");
-
-        // Variables
+    private boolean bottlesToXP(int amountToRemove, Player player) {
         int leftToRemove = amountToRemove;
-        ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-
-        // Searches inventory for XP bottles and removes the number specified that we are looking for
-        for (int i = 0; i < inv.getSize(); i++) {
-            ItemStack invSlot = inv.getItem(i);
-            if (invSlot.isSimilar(xpBottle)) {
-                if (leftToRemove >= 0) {
-                    if (invSlot.getAmount() < leftToRemove) {
-                        leftToRemove -= invSlot.getAmount();
-                        inv.clear(i);
-                    } else if (invSlot.getAmount() == leftToRemove) {
-                        inv.clear(i);
-                        leftToRemove = 0;
-                        break;
-                    } else if (invSlot.getAmount() > leftToRemove) {
-                        invSlot.setAmount((invSlot.getAmount() - leftToRemove));
-                        leftToRemove = 0;
-                        break;
+        PlayerInventory pi = player.getInventory();
+        ItemStack[] is = pi.getContents();
+        for (int i = 0; i < pi.getSize(); i++) {
+            if (is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
+                if (is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+                    if (leftToRemove > 0) {//if more to remove then...
+                        if (is[i].getAmount() < leftToRemove) {//if found
+                            leftToRemove -= is[i].getAmount();
+                            pi.clear(i);
+                        } else if (is[i].getAmount() == leftToRemove) {
+                            pi.clear(i);
+                            leftToRemove = 0;
+                            break;
+                        } else if (is[i].getAmount() > leftToRemove) {
+                            is[i].setAmount((is[i].getAmount() - leftToRemove));
+                            leftToRemove = 0;
+                            break;
+                        }
                     }
                 }
             }
         }
-
-        this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                "Preparing to translate numeric values into experience.");
-
-        // Adds levels to player's inventory based on what was taken
         if (leftToRemove == 0) {
             int xpOrbTotal = 0;
-            for (int i = 0; i < amountToRemove; i++) {//translate everything into orbs
-                int xpOrb = Math.round(orbsPerBottle());
-                this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                        "Values of orbs being output: " + i + ". " + xpOrb + "\n*** DEBUG ***");
+            for (int i = 0; i < amountToRemove; i++) {
+                int xpOrb = (int) Math.round(orbsPerBottle());
                 xpOrbTotal += xpOrb;
             }
-
-            // Confirm the player's transaction and give them orbs
-            player.sendMessage(ChatColor.DARK_AQUA + "Your withdrawal has been processed. Thank you for supporting " +
-                    "the " + this.getConfig().get("bank-name") + "!");
             player.giveExp(xpOrbTotal);
-
-            // Debug print messages
-            this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                    "Values of TotalOrbs output: " + xpOrbTotal + "\n*** DEBUG ***");
-            this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                    "Total player experience after additional TotalOrbs: " + player.getTotalExperience() + "\n*** DEBUG ***");
+            player.sendMessage(ChatColor.DARK_AQUA + "You withdrawal of " + amountToRemove + " bottles has been processed. Thank you for your business!");
+            return true;
         }
-    }
-
-    /**
-     * Reloads the configuration file for CrystalBanker.
-     *
-     * @param sender the command sender to be sent a message
-     * @return true if it reloads successfully (no way for it not to right now)
-     */
-    private boolean reloadConf(CommandSender sender) {
-        this.reloadConfig();
-        sender.sendMessage(ChatColor.GRAY + "Configuration reloaded!");
-        return true;
+        return false;
     }
 
     /**
      * Withdraw experience orbs from experience bottles.
      *
-     * @param player       the player withdrawing orbs
-     * @param bottlesToUse the amount of bottles to use for withdrawing
-     * @param inv          the inventory of the player withdrawing
+     * @param player         the player withdrawing orbs
+     * @param amountToRemove the amount of bottles to use for withdrawing
      * @return true if the withdrawal happens successfully
      */
-    private boolean withdrawMethod(Player player, String bottlesToUse, Inventory inv) {
-        int amountToRemove = isInt(player, bottlesToUse);
-        if (countBottles(player, inv, amountToRemove)) {
-            bottlesToXP(amountToRemove, player, inv);
+    private boolean withdrawMethod(Player player, int amountToRemove) {
+        if (countBottles(player) < amountToRemove) {
+            player.sendMessage(ChatColor.RED + "You don't have enough XP bottles (" + countBottles(player) + ") in your inventory to exchange the amount you entered (" + amountToRemove + ").");
             return true;
-        } else return false;
+        } else if (countBottles(player) >= amountToRemove) {
+            bottlesToXP(amountToRemove, player);
+            return true;
+        }
+        return false;
     }
 
     /**
      * Counts the number of bottles in the player's inventory before proceeding with a transaction.
      *
      * @param player the player who is being checked
-     * @param inv the inventory of the player being checked
-     * @param amountToRemove the minimum number of bottles needed for the transaction
      * @return true if the player has enough bottles
      */
-    private boolean countBottles(Player player, Inventory inv, int amountToRemove) {
-
-        // Variables
+    private int countBottles(Player player) {
+        PlayerInventory pi = player.getInventory();
+        ItemStack[] is = pi.getContents();
         int tally = 0;
-        ItemStack xpBottle = new ItemStack(Material.EXP_BOTTLE);
-
-        // Scan player inventory and tally number of experience bottles
-        for (int i = 0; i < inv.getSize(); i++) {
-            ItemStack invSlot = inv.getItem(i);
-            if (invSlot.getType().equals(xpBottle.getType())) tally += invSlot.getAmount();
+        for (int i = 0; i < pi.getSize(); i++) {
+            if (is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
+                if (is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+                    tally += is[i].getAmount();
+                }
+            }
         }
-
-        // If the player has enough, remove bottles; if not, fail the check
-        if (tally < amountToRemove) {
-            this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                    "Bottles counted: " + tally + "\n*** DEBUG ***");
-            player.sendMessage(ChatColor.RED + "You don't have enough experience bottles in your inventory to " +
-                    "exchange the amount you requested.");
-            return false;
-        } else if (tally >= amountToRemove) {
-            player.sendMessage(ChatColor.GRAY + "Experience bottles counted: " + tally);
-            this.getLogger().finest(ChatColor.RED + "*** DEBUG ***\n" +
-                    "Bottles counted: " + tally + "\n*** DEBUG ***");
-            return false;
-        }
-        return true;
+        return tally;
     }
 
+    //TODO REBUILD ALL METHODS USING LEVELS!
     /**
      * Returns experience bottles based on the amount of experience orbs the player has.
      *
      * @param player the player who is converting orbs to bottles
-     * @param numOrbsToConvert the number of orbs to convert to bottles
+     * @param storeLevels the number of orbs to convert to bottles
      * @return true if the transaction successfully completes
      */
-    private boolean depositOrbs(Player player, String numOrbsToConvert) {
-
-        // Variables
-        int storeLevels = isInt(player, numOrbsToConvert);
+    private boolean depositMethod(Player player, int storeLevels) {
         int currentLevel = player.getLevel();
-
-        // If the player has enough orbs, cash them in for bottles
-        if (countXP(player)) {
+        if (countXP(player, storeLevels)) {
             if (currentLevel <= 16) {
-                expToBottles(player, formulaTierOne(storeLevels, currentLevel), storeLevels);
+                expToBottles(player, formulaTierOne(storeLevels, currentLevel));
                 return true;
             } else if (currentLevel <= 31) {
-                expToBottles(player, forumlaTierTwo(storeLevels, currentLevel), storeLevels);
+                expToBottles(player, formulaTierTwo(storeLevels, currentLevel));
                 return true;
             } else if (currentLevel >= 32) {
-                expToBottles(player, forumlaTierThree(storeLevels, currentLevel), storeLevels);
+                expToBottles(player, formulaTierThree(storeLevels, currentLevel));
                 return true;
             }
         }
         return false;
     }
 
+    //TODO THIS MAY NEED TO BE DONE IF WE NO LONGER USE FULL LEVELS TO ACCESS ITEMS
     /**
      * Checks to make sure the player has at least one level of experience.
      *
      * @param p the player being checked
      * @return true if the player has greater than seven orbs (i.e. one level)
      */
-    private boolean countXP(Player p) {
-        int currentXP = p.getTotalExperience();
-        if (currentXP > 7) return true;
+    private boolean countXP(Player p, int amountToRemove) {
+        if (p.getLevel() >= amountToRemove)
+            return true;
         else {
-            p.sendMessage(ChatColor.RED + "You have less than one level! Make sure you have at least one level of " +
-                    "experience before trying again.");
+            p.sendMessage(ChatColor.RED + "You have " + p.getLevel() + " levels. You tried to deposit " + amountToRemove + " levels.");
+            p.sendMessage(ChatColor.RED + "CrystalBanker forgives the overdraft and waives all fees. Next time, please ensure you enter the correct amount!");
             return false;
+        }
+    }
+
+    /**
+     * Cashes in all of a player's experience orbs in exchange for experience bottles.
+     *
+     * @param p the player cashing in their orbs
+     */
+    private void cash(Player p) {//TODO Build a fill inventory with EXP bottles METHODS
+        int currentXP = p.getTotalExperience();
+        //more EXP than zero
+        if (currentXP > 0) {
+            int bottles = 0;
+            float trackXP = currentXP;
+            int maxBottleAmount = numInvFreeSpace(p);
+
+            while (bottles < maxBottleAmount && (trackXP > 0)) {
+                trackXP -= orbsPerBottle();
+                bottles++;
+            }
+            if (trackXP < 0) {
+                trackXP = 0;
+                bottles--;
+            }
+            if (bottles > maxBottleAmount) {
+                bottles--;
+                p.sendMessage(ChatColor.DARK_AQUA + "Your complete deposit of " + currentXP + " orbs has been processed. Thank you for your business!");
+                p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " orbs remaining, and gained " + bottles + " bottles.");
+                p.setExp((float) 0);
+                p.setLevel(0);
+                p.setTotalExperience(0);
+                p.giveExp(Math.round(trackXP));
+                p.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+                p.sendMessage(ChatColor.DARK_AQUA + "Your complete deposit of " + currentXP + " orbs has been processed. Thank you for your business!");
+                p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " of " + p.getTotalExperience() + " orbs remaining, and gained " + bottles + " bottles.");
+            } else {
+                p.setExp((float) 0);
+                p.setLevel(0);
+                p.setTotalExperience(0);
+                p.giveExp(Math.round(trackXP));
+                p.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+                p.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (currentXP - trackXP) + " orbs has been processed. Thank you for your business!");
+                p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " of " + p.getTotalExperience() + " orbs remaining, and gained " + bottles + " bottles.");
+            }
+        } else {
+            p.sendMessage(ChatColor.GRAY + "You don't have any experience points.");
         }
     }
 
@@ -315,30 +338,32 @@ public class CrystalBanker extends JavaPlugin {
      *
      * @param player the player who is converting orbs to bottles
      * @param expToRemove the amount of experience orbs to remove from the player
-     * @param numToConvert the number of orbs to be removed from the player
      */
-    private void expToBottles(Player player, int expToRemove, int numToConvert) {
-
-        // Variables
-        int currentExp = player.getTotalExperience();
-
-        // Checks if current experience matches up with the amount to remove
-        if (currentExp > (currentExp - expToRemove)) {
+    private void expToBottles(Player player, int expToRemove) {
+        int currentXP = player.getTotalExperience();
+        if (currentXP > (currentXP - expToRemove)) {
             int bottles = 0;
-            float trackXP = currentExp;
-            while (trackXP > (currentExp - expToRemove)) {
+            float trackXP = currentXP;
+            while (trackXP > (currentXP - expToRemove)) {
                 trackXP -= orbsPerBottle();
                 bottles++;
             }
+            if (trackXP < 0) {
+                trackXP = 0;
+                bottles--;
+            }
             if (numInvFreeSpace(player) >= bottles) {
-                player.sendMessage(ChatColor.DARK_AQUA + "You deposited " + (expToRemove) + " experience has been processed. Thank you for supporting Crystal Banks!");
-                player.setLevel(player.getLevel() - numToConvert);
+                player.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (expToRemove) + " orbs has been processed. Thank you for your business!");
+                //!!!!FLAG NOTE NEW CHANGE TEST THROUGHLY BEFORE PUBLISHING!!!!
+
+                player.setExp((float) 0);
+                player.setLevel(0);
+                player.setTotalExperience(0);
+                player.giveExp((int) trackXP);
                 player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
             } else {
-                player.sendMessage(ChatColor.RED + "Due to lack inventory space your transaction was canceled! " + "Crystal Banks forgives your awful teasing, but please! Next time! Have enough room in your inventory!");
+                player.sendMessage(ChatColor.RED + "Due to lack of inventory space, your transaction was canceled!");
             }
-        } else {
-            player.sendMessage(ChatColor.RED + "Due to lack of XP your deposit was canceled! " + "Crystal Banks forgives the overdraft, and waives all fees. Next time please ensure you enter the correct amount!");
         }
     }
 
@@ -349,18 +374,15 @@ public class CrystalBanker extends JavaPlugin {
      * @return the number of tallied free spaces for bottles
      */
     private int numInvFreeSpace(Player player) {
-
-        // Variables
+        PlayerInventory pi = player.getInventory();
+        ItemStack[] is = pi.getContents(); //returns array of ItemStacks[] from inv
         int tally = 0;
-        PlayerInventory inv = player.getInventory();
-        ItemStack[] is = inv.getContents(); //returns array of ItemStacks[] from inv
-
-        player.sendMessage(String.format("%s%d", "amount of indexes: ", is.length));
-        //ArrayList<Integer> emptySlots = new ArrayList<Integer>();
-        for (int i = 0; i < inv.getSize(); i++) {
-            if (is[i] == null || is[i].isSimilar(new ItemStack(Material.AIR))) tally += 64;
+        for (int i = 0; i < pi.getSize(); i++) {
+            if (is[i] == null || is[i].isSimilar(new ItemStack(Material.AIR))) {
+                tally += 64;
+            }
         }
-        for (int i = 0; i < inv.getSize(); i++) { // pi = player inventory object
+        for (int i = 0; i < pi.getSize(); i++) { // pi = player inventory object
             if (is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
                 if (is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
                     tally += 64 - (is[i].getAmount());
@@ -370,6 +392,7 @@ public class CrystalBanker extends JavaPlugin {
         return tally;
     }
 
+    //DO NOT TOUCH THIS COMMENT: FOR LEVELS 1, 2, 3, ..., 14, 15, 16? TEST
     /**
      * Tier One conversions for players with levels between 1-16.
      *
@@ -377,17 +400,15 @@ public class CrystalBanker extends JavaPlugin {
      * @param currentLevel the current level of experience of the player
      * @return the amount of experience orbs to remove
      */
-    private int formulaTierOne(int useLevel, int currentLevel) {
-        int targetLevel = currentLevel - useLevel;
+    private static int formulaTierOne(int useLevel, int currentLevel) {
         int amountToRemove = 0;
-        if (targetLevel >= 0) {
-            for (int i = 0; i < useLevel; i++) {
-                amountToRemove += (2 * (useLevel - i) + 7);
-            }
+        for (int i = 0; i < useLevel; i++) {
+            amountToRemove += (2 * (currentLevel - i) + 5);
         }
         return amountToRemove; //Gives XP: Tier 1 Only
     }
 
+    //DO NOT TOUCH THIS COMMENT: FOR LEVELS 1, 2, ..., 16?, 17, 18, ..., 30, 31?, 32? TEST
     /**
      * Tier Two conversions for players with levels 1-16.
      *
@@ -395,31 +416,33 @@ public class CrystalBanker extends JavaPlugin {
      * @param currentLevel the current level of experience of the player
      * @return the amount of experience orbs to remove
      */
-    private int forumlaTierTwo(int useLevel, int currentLevel) {
+    private static int formulaTierTwo(int useLevel, int currentLevel) {
         int amountToRemove = 0;
         if (useLevel <= currentLevel - 16) {
             int tempLevel = currentLevel - 16;
             for (int i = 0; i < useLevel; i++) {
-                amountToRemove += (5 * (tempLevel - i) + 42);
+                amountToRemove += (5 * (tempLevel - i) + 37);
             }
             return amountToRemove; //Gives XP: Tier 2 Only
         } else if (useLevel > currentLevel - 16) {
             int tempLevel = currentLevel - 16;
             for (int i = 0; i < tempLevel; i++) {
-                amountToRemove += (5 * (tempLevel - i) + 42);
+                amountToRemove += (5 * (tempLevel - i) + 37);
             }
             int useTier1 = useLevel - tempLevel;
-            tempLevel = 16;
-            if (useTier1 >= 0) {
-                for (int i = 0; i < useTier1; i++) {
-                    amountToRemove += (2 * (tempLevel - i) + 7);
-                }
-                return amountToRemove;
-            }//Gives XP: Tier 1 and 2
+            amountToRemove += formulaTierOne(useTier1, 16);
+            //TODO OLD FUNCTION KEEP INCASE OF ISSUES			tempLevel = 16;
+            //			if (useTier1 >= 0) {
+            //				for(int i = 0; i < useTier1; i++){
+            //					amountToRemove += (2*(tempLevel-i) + 5);
+            //				}
+            //				return amountToRemove;
+            //}Gives XP: Tier 1 and 2
         }
         return amountToRemove;
     }
 
+    //DO NOT TOUCH THIS COMMENT: FOR LEVELS 1, 2, 3, ..., 14, 15, 16? TEST
     /**
      * Tier Three conversions for players with greater than 32 levels.
      *
@@ -427,46 +450,25 @@ public class CrystalBanker extends JavaPlugin {
      * @param currentLevel the current level of experience of the player
      * @return the amount of experience orbs to remove
      */
-    private int forumlaTierThree(int useLevel, int currentLevel) {
+    private int formulaTierThree(int useLevel, int currentLevel) {
         int targetLevel = currentLevel - useLevel;
         if (targetLevel >= 0) {
             if (useLevel <= currentLevel - 31) {//result level will be 31 or more
-                int tempLevel = currentLevel - 31;
                 int temp = 0;
                 for (int i = 0; i < useLevel; i++) {
-                    temp += 9 * (tempLevel - i) + 121;
+                    temp += 9 * ((currentLevel - 31) - i) + 112;
                 }
                 return temp;
-                //returns tier 3 XP that needs to be removed(counted and bottled)!
-            } else if (useLevel > currentLevel - 31) {//result intent level will be less than 31
+            } else if (useLevel > currentLevel - 31) {//resultant level will be less than 31
                 int useOnTier3 = currentLevel - 31;//levels to use with formula 3
                 int total = 0;
-                for (int i = 0; i <= useOnTier3; i++) {
+                for (int i = 1; i <= useOnTier3; i++) {
                     total += (9 * (useOnTier3 - i) + 121);//add tier 3 xp to bottle
                 }
-                useLevel -= useOnTier3;
-                int tier2Levels = (currentLevel - useOnTier3 - 16);
-                if (useLevel <= tier2Levels) {//leaving 16 or more levels left
-                    for (int i = 0; i < useLevel; i++) {
-                        total += (5 * (tier2Levels - i) + 42);
-                    }
-                    return total; //returns tier 2 and 3 XP that needs to be removed(counted and bottled)!
-                }
-                int useOnTier2 = useLevel - 16; //				int tier1Levels = (currentLevel - useOnTier3 - useOnTier2);
-                if (useLevel > currentLevel - useOnTier3 - 16) {//enough useLevels to access tier 1 this does not imply that the other methods agree
-                    for (int i = 0; i < useOnTier2; i++) {
-                        total += 5 * (useOnTier2 - i) + 42;
-                    }
-                    int useOnTier1 = useLevel - useOnTier2 - useOnTier3;
-                    int tempLevel = currentLevel - useOnTier2 - useOnTier3;
-                    for (int i = 0; i < useOnTier1; i++) {
-                        total += (2 * (tempLevel - i) + 7);
-                    }
-                    return total; //returns tier 1 (if any) 2 and 3 XP that needs to be removed(counted and bottled)!
-                }
+                total += formulaTierTwo((useLevel - useOnTier3), (currentLevel - useOnTier3));
+                return total;
             }
         }
         return 0;
     }
 }
-
