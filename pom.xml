@@ -15,7 +15,7 @@
 
     <groupId>com.crystalcraftmc.crystalbanker</groupId>
     <artifactId>CrystalBanker</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0.6</version>
 
     <profiles>
         <profile>
