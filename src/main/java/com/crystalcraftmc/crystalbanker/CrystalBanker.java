@@ -30,7 +30,7 @@ import java.util.Random;
  *
  * @author Ivan Frasure
  * @author Justin W. Flory
- * @version 2016.04.25.v1
+ * @version 2019.01.26.v1.0.4
  */
 public class CrystalBanker extends JavaPlugin {
 
@@ -176,7 +176,7 @@ public class CrystalBanker extends JavaPlugin {
         ItemStack[] is = pi.getContents();
         for (int i = 0; i < pi.getSize(); i++) {
             if (is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
-                if (is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+                if (is[i].isSimilar(new ItemStack(Material.EXPERIENCE_BOTTLE))) {
                     if (leftToRemove > 0) {//if more to remove then...
                         if (is[i].getAmount() < leftToRemove) {//if found
                             leftToRemove -= is[i].getAmount();
@@ -237,7 +237,7 @@ public class CrystalBanker extends JavaPlugin {
         int tally = 0;
         for (int i = 0; i < pi.getSize(); i++) {
             if (is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
-                if (is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+                if (is[i].isSimilar(new ItemStack(Material.EXPERIENCE_BOTTLE))) {
                     tally += is[i].getAmount();
                 }
             }
@@ -316,7 +316,7 @@ public class CrystalBanker extends JavaPlugin {
                 p.setLevel(0);
                 p.setTotalExperience(0);
                 p.giveExp(Math.round(trackXP));
-                p.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+                p.getInventory().addItem(new ItemStack(Material.EXPERIENCE_BOTTLE, bottles));
                 p.sendMessage(ChatColor.DARK_AQUA + "Your complete deposit of " + currentXP + " orbs has been processed. Thank you for your business!");
                 p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " of " + p.getTotalExperience() + " orbs remaining, and gained " + bottles + " bottles.");
             } else {
@@ -324,7 +324,7 @@ public class CrystalBanker extends JavaPlugin {
                 p.setLevel(0);
                 p.setTotalExperience(0);
                 p.giveExp(Math.round(trackXP));
-                p.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+                p.getInventory().addItem(new ItemStack(Material.EXPERIENCE_BOTTLE, bottles));
                 p.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (currentXP - trackXP) + " orbs has been processed. Thank you for your business!");
                 p.sendMessage(ChatColor.DARK_AQUA + "Balance Statement: You have " + trackXP + " of " + p.getTotalExperience() + " orbs remaining, and gained " + bottles + " bottles.");
             }
@@ -360,7 +360,7 @@ public class CrystalBanker extends JavaPlugin {
                 player.setLevel(0);
                 player.setTotalExperience(0);
                 player.giveExp((int) trackXP);
-                player.getInventory().addItem(new ItemStack(Material.EXP_BOTTLE, bottles));
+                player.getInventory().addItem(new ItemStack(Material.EXPERIENCE_BOTTLE, bottles));
             } else {
                 player.sendMessage(ChatColor.RED + "Due to lack of inventory space, your transaction was canceled!");
             }
@@ -384,7 +384,7 @@ public class CrystalBanker extends JavaPlugin {
         }
         for (int i = 0; i < pi.getSize(); i++) { // pi = player inventory object
             if (is[i] != null && !is[i].isSimilar(new ItemStack(Material.AIR))) {
-                if (is[i].isSimilar(new ItemStack(Material.EXP_BOTTLE))) {
+                if (is[i].isSimilar(new ItemStack(Material.EXPERIENCE_BOTTLE))) {
                     tally += 64 - (is[i].getAmount());
                 }
             }

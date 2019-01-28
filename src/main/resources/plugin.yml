@@ -1,9 +1,10 @@
 name: CrystalBanker
 main: com.crystalcraftmc.crystalbanker.CrystalBanker
-version: 1.0.5
+version: 1.0.4
 description: Convert experience orbs to bottles and bottles to experience orbs.
 authors: [jflory7, Jacc734, Jwood9198]
 website: https://github.com/CrystalCraftMC/CrystalBanker
+api-version: 1.13
 
 commands:
   crystalbanker:

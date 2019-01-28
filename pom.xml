@@ -15,7 +15,7 @@
 
     <groupId>com.crystalcraftmc.crystalbanker</groupId>
     <artifactId>CrystalBanker</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0.4</version>
 
     <profiles>
         <profile>
@@ -58,12 +58,12 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.9.2-R0.1-SNAPSHOT</version>
+            <version>1.13.2-R0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.9.2-R0.1-SNAPSHOT</version>
+            <version>1.13.2-R0.1-SNAPSHOT</version>
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
