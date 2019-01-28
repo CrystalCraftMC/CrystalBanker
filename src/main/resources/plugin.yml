@@ -19,17 +19,17 @@ permissions:
       crystalbanker.deposit: true
       crystalbanker.withdraw: true
       crystalbanker.zero: true
-      crystalbanker.cash: true
+      crystalbanker.levelup: true
   crystalbanker.deposit:
     description: Store levels into bottles.
     default: op
   crystalbanker.withdraw:
     description: Turn bottles into levels.
     default: op
-  crystalbanker.zero:
+  crystalbanker.levelup:
     description: Convert all bottles in inventory to XP.
     default: op
-  crystalbanker.cash:
+  crystalbanker.zero:
     description: Convert levels to max amount of bottles player's inventory can hold.
     default: op
   crystalbanker.reload:

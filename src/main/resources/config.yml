@@ -1,8 +1,76 @@
 # CrystalBanker Configuration File
 # Revision: 1.0.4
 
-# Name of your server's "bank"
-bank-name: Bank of CrystalCraftMC
+# Logger messages are not configurable - no point
+
+#Non-player attempts to run /cb commands
+non-player-fail: "This command can only be run by a player."
+
+#player reloaded config
+reload-config: "&7 The configuration was reloaded!"
+
+# Message sent when player cannot deposit levels into bottles
+# Example: You can deposit ___ levels. The amount of levels is filled in the code.
+failed-deposit-levels-1: "You can deposit "
+failed-deposit-levels-2: " levels."
+
+#Extra help messages for failed level deposits
+failed-deposit-level-extra: "Note: the number of levels you are allowed to deposit at a time depends on having enough inventory space."
+failed-deposit-levels-usage: "Usage: /crystalbanker deposit [number of levels]"
+
+# Message sent when player withdraw cmd failed for some reason
+# Example: You can withdraw up to  ___  bottles.
+failed-withdraw-cmd-1: "You can withdraw up to "
+failed-withdraw-cmd-2: " bottles."
+#Usage message for failed withdraw cmd
+failed-withdraw-cmd-usage: "Usage: /crystalbanker withdraw [number of bottles]"
+
+#catch-all usage help
+help: "CrystalBanker Help:\n/crystalbanker deposit [number of levels]\n/crystalbanker withdraw [number of bottles]\n/crystalbanker zero (to cash in all XP bottles)"
+
+# integer was expected; integer check failed
+integer-check: "You need to make sure to input an integer number."
+
+#Message sent when withdraw success
+#Example: "Your withdrawal of " + amountToRemove + " bottles has been processed. Thank you for your business!"
+withdraw-success-1: "Your withdrawal of "
+withdraw-success-2: " bottles has been processed. Thank you for your business!"
+
+#Message sent when withdraw fails due to not having enough bottles
+#Example: "You don't have enough XP bottles (_____) in your inventory to exchange the amount you entered (____)."
+withdraw-fail-exp-1: "You don't have enough XP bottles ("
+withdraw-fail-exp-2: ") in your inventory to exchange the amount you entered ("
+withdraw-fail-exp-3: ")."
+
+#Message when deposit fails due to lack of levels
+#Example:  "You have _______ levels. You tried to deposit ____ levels."
+deposit-fail-exp-1: "You have "
+deposit-fail-exp-2: " levels. You tried to deposit "
+deposit-fail-exp-3: " levels."
+#Extra message for when deposit fails due to lack of levels
+#Example: "CrystalBanker forgives the overdraft and waives all fees. Next time, please ensure you enter the correct amount!"
+deposit-fail-exp-extra: "CrystalBanker forgives the overdraft and waives all fees. Next time, please ensure you enter the correct amount!"
+
+#command Zero worked, max exp points dumped into bottles
+# Example: "Your deposit of " + (currentXP - trackXP) + " experience points has been processed. Thank you for business!");
+zero-success-0-1: "Your deposit of "
+zero-success-0-2: " experience points has been processed."
+#second message after zero cmd works
+# Example: "Balance Statement: You have " + trackXP + " of " + p.getTotalExperience() + " experience points remaining, and gained " + bottles + " bottles.");
+zero-success-1-1: "Balance Statement: You have "
+zero-success-1-2: " experience points remaining, and gained "
+zero-success-1-3: " bottles."
+
+#Zero fails
+zero-fail: "You don't have any experience points."
+
+#Deposit success
+#example:                 player.sendMessage(ChatColor.DARK_AQUA + "Your deposit of " + (expToRemove) + " orbs has been processed. Thank you for your business!");
+deposit-success-1: "Your deposit of "
+deposit-success-2: " experience points has been processed. Thank you for your business!"
+
+#Inventory doesn't have room, transfer of bottles cancelled.
+inventory-fail: "Due to lack of inventory space, your transaction was canceled!"
 
 # Use glass bottles? (Glass ability not implemented in code yet)
 require-glass: false
